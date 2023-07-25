@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/orangeseeds/rtdatabase/api"
-	"github.com/orangeseeds/rtdatabase/core"
+	"github.com/orangeseeds/blitzbase/api"
+	"github.com/orangeseeds/blitzbase/core"
 	"github.com/spf13/cobra"
 )
 

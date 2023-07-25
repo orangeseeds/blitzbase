@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/orangeseeds/rtdatabase/core"
+	"github.com/orangeseeds/blitzbase/core"
 )
 
 func logger(fn http.HandlerFunc) http.HandlerFunc {

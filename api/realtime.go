@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/orangeseeds/rtdatabase/core"
+	"github.com/orangeseeds/blitzbase/core"
 )
 
 type rtServer struct {

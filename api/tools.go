@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/orangeseeds/rtdatabase/core"
+	"github.com/orangeseeds/blitzbase/core"
 )
 
 

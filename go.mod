@@ -1,4 +1,4 @@
-module github.com/orangeseeds/rtdatabase
+module github.com/orangeseeds/blitzbase
 
 go 1.20
 
