@@ -1,24 +1,53 @@
+class Blitzbase {
+    constructor(url) {
+        this.url = url
+    }
+
+    collection(name) {
+        this.collection = name
+        return this
+    }
+
+    subscribe(action, callback) {
+        const sse = new EventSource(`${this.url}/realtime/${action}-${this.collection}`)
+
+        sse.addEventListener(action, callback)
+
+
+        sse.addEventListener("error", (e) => {
+            console.log("Error: ", e)
+            sse.close()
+        })
+    }
+}
+
 function main() {
 
     const elem = document.querySelector("#msg")
 
-    const sse = new EventSource("http://127.0.0.1:3300/realtime")
 
-    sse.addEventListener("error", (e) => {
-        console.log("Error: ", e)
-        sse.close()
-    })
-
-    sse.addEventListener("sqlite_insert", (e) => {
+    const bb = new Blitzbase("http://127.0.0.1:3300")
+    bb.collection("users").subscribe("create", (e) => {
         const data = JSON.parse(e.data)
-        elem.innerHTML = data.data
+        elem.innerHTML = JSON.stringify(data)
     })
-
-
-    sse.addEventListener("message", (e) => {
-        const data = JSON.parse(e.data)
-        elem.innerHTML = data.data
-    })
+    // const sse = new EventSource("http://127.0.0.1:3300/realtime/")
+    //
+    // sse.addEventListener("error", (e) => {
+    //     console.log("Error: ", e)
+    //     sse.close()
+    // })
+    //
+    // sse.addEventListener("create", (e) => {
+    //     const data = JSON.parse(e.data)
+    //     elem.innerHTML = JSON.stringify(data)
+    // })
+    //
+    //
+    // sse.addEventListener("message", (e) => {
+    //     const data = JSON.parse(e.data)
+    //     elem.innerHTML = data.data
+    // })
 
 }
 
@@ -27,9 +56,9 @@ async function createUser(name) {
         data = {
             name: name
         }
-        let resp = await fetch("http://127.0.0.1:3300/register", {
+        let resp = await fetch("http://127.0.0.1:3300/realtime/register", {
             method: "POST",
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
 
         })
         return resp.json()

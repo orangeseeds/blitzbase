@@ -1,13 +1,13 @@
 package core
 
+import "github.com/orangeseeds/blitzbase/store"
+
 type App struct {
-	Store *Storage
-    Publisher *Publisher
+	Store *store.Storage
 }
 
-func NewApp(store *Storage, pub *Publisher) *App {
+func NewApp(store *store.Storage) *App {
 	return &App{
 		Store: store,
-        Publisher: pub,
 	}
 }

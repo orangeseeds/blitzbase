@@ -1,13 +1,31 @@
 package main
 
 import (
-	"log"
+	"fmt"
+	"os"
+
+	"github.com/orangeseeds/blitzbase/core"
+	"github.com/orangeseeds/blitzbase/store"
+	"github.com/spf13/cobra"
 )
 
+var rootCmd = &cobra.Command{
+	Use:   "blitzbase",
+	Short: "Blitzbase is a realtime database.",
+}
+
 func main() {
-	serveCommand := NewServerCommand()
-    err  :=serveCommand.Execute()
-    if err != nil {
-        log.Println(err)
-    }
+
+	dbPath := "./test.db"
+	store := store.NewStorage(dbPath)
+	app := core.NewApp(store)
+
+	rootCmd.AddCommand(NewMigrateCommand(app))
+	rootCmd.AddCommand(NewAdminCommand(app))
+	rootCmd.AddCommand(NewServerCommand(app))
+	err := rootCmd.Execute()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }

@@ -6,85 +6,74 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/orangeseeds/blitzbase/core"
+	"github.com/orangeseeds/blitzbase/store"
 )
 
 type rtServer struct {
 	app core.App
 }
 
+func (api *rtServer) Router() http.Handler {
+	r := chi.NewRouter()
+	r.Get("/{action}-{collection}", api.handleRealtime)
+	r.Post("/register", api.createUser)
+	return r
+}
+
 func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		{
-			flusher, ok := w.(http.Flusher)
-			if !ok {
-				http.Error(w, "SSE is not supported", http.StatusInternalServerError)
-			}
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Content-type", "text/event-stream")
+	collection := chi.URLParam(r, "collection")
+	action := chi.URLParam(r, "action")
+	w.Header().Set("Content-type", "text/event-stream")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "SSE is not supported", http.StatusInternalServerError)
+	}
 
-			sub := core.NewSubscriber(5)
-			api.app.Publisher.Subscribe(sub, "sqlite_insert")
+	sub := store.NewSubscriber(5)
+	api.app.Store.Publisher.Subscribe(sub, action, store.TopicInfo{
+		Collection: collection,
+	})
 
-			for data := range sub.Listen() {
-				msg, _ := data.FormatSSE()
-				_, err := w.Write([]byte(msg))
-				if err != nil {
-					log.Print("Write Error:", err)
-					return
-				}
-				flusher.Flush()
-			}
-
-			// for data := range api.app.Publisher.Notifier {
-			// 	message, _ := formatServerSentEvent("newUserCreated", data)
-			// 	_, err := w.Write([]byte(message))
-			// 	if err != nil {
-			// 		log.Println("Write Error: ", err)
-			// 		break
-			// 	}
-			// 	flusher.Flush()
-			// }
+	for data := range sub.Listen() {
+		msg, _ := data.FormatSSE()
+		_, err := w.Write([]byte(msg))
+		if err != nil {
+			log.Print("Write Error:", err)
+			return
 		}
-	default:
-		w.WriteHeader(http.StatusNotImplemented)
+		flusher.Flush()
 	}
 }
 
 func (api *rtServer) createUser(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Content-Type", "application/json")
 
-		var data struct {
-			Name string
-		}
-
-		err := json.NewDecoder(r.Body).Decode(&data)
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			log.Println(err)
-			return
-		}
-
-		db := api.app.Store.DB
-		query := fmt.Sprintf("Insert into users (name) values ('%s')", data.Name)
-		_, err = db.Exec(query)
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			log.Println(err)
-			return
-		}
-
-		message := map[string]any{
-			"status":  "success",
-			"message": "successfully created new user " + data.Name,
-		}
-		json.NewEncoder(w).Encode(message)
-	default:
-		w.WriteHeader(http.StatusNotImplemented)
+	var data struct {
+		Username string
+		Email    string
+		Password string
 	}
+
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		log.Println(err)
+		return
+	}
+
+	db := api.app.Store.DB
+	query := fmt.Sprintf("Insert into users (username, email, password) values ('%s', '%s', '%s')", data.Username, data.Email, data.Password)
+	_, err = db.Exec(query)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	message := map[string]any{
+		"status":  "success",
+		"message": "successfully created new user " + data.Username,
+	}
+	json.NewEncoder(w).Encode(message)
 }
