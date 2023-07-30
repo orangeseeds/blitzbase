@@ -1,4 +1,4 @@
-package core
+package store
 
 import (
 	"bytes"
@@ -7,15 +7,23 @@ import (
 	"strings"
 )
 
+/**
+Topic
+    collection: "",
+    field_name: "",
+    field_value: "",
+
+**/
+
 type Message struct {
 	topic string
-	body  string
+	data  HookData
 }
 
-func (m *Message) NewMessage(topic, body string) *Message {
+func NewMessage(topic string, meta HookData) *Message {
 	return &Message{
 		topic: topic,
-		body:  body,
+		data:  meta,
 	}
 }
 
@@ -23,20 +31,16 @@ func (m *Message) GetTopic() string {
 	return m.topic
 }
 
-func (m *Message) GetBody() string {
-	return m.body
+func (m *Message) GetData() HookData {
+	return m.data
 }
 
 func (m *Message) FormatSSE() (string, error) {
-	data := map[string]any{
-		"data": m.body,
-	}
-
 	buff := bytes.NewBuffer([]byte{})
 
 	encoder := json.NewEncoder(buff)
 
-	err := encoder.Encode(data)
+	err := encoder.Encode(m.data)
 	if err != nil {
 		return "", err
 	}
@@ -45,6 +49,7 @@ func (m *Message) FormatSSE() (string, error) {
 
 	sb.WriteString(fmt.Sprintf("event: %s\n", m.topic))
 	sb.WriteString(fmt.Sprintf("data: %v\n\n", buff.String()))
+	// log.Println(sb.String())
 
 	return sb.String(), nil
 }

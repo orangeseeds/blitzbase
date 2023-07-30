@@ -1,4 +1,4 @@
-package core
+package store
 
 import (
 	"sync"
@@ -17,16 +17,16 @@ func NewPublisher() *Publisher {
 	}
 }
 
-func (p *Publisher) Subscribe(s *Subscriber, topics ...string) {
+func (p *Publisher) Subscribe(s *Subscriber, topic string, rule TopicInfo) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
-	for _, topic := range topics {
-		if _, ok := p.topics[topic]; !ok {
-			p.topics[topic] = Subscribers{}
-		}
-		s.addTopic(topic)
-		p.topics[topic][s.id] = s
+	// for _, topic := range topics {
+	if _, ok := p.topics[topic]; !ok {
+		p.topics[topic] = Subscribers{}
 	}
+	s.addTopic(topic, rule)
+	p.topics[topic][s.id] = s
+	// }
 }
 
 func (p *Publisher) Unsubscribe(s *Subscriber, topics ...string) {
@@ -45,20 +45,21 @@ func (p *Publisher) SubCount(topic string) int {
 	return 0
 }
 
-func (p *Publisher) Broadcast(msg string, topics ...string) {
+func (p *Publisher) Broadcast(data HookData, topic string) {
 	// p.mut.Lock()
 	// defer p.mut.Unlock()
 
-	for _, topic := range topics {
-		if subs, ok := p.topics[topic]; ok {
-			for _, sub := range subs {
-				go func(sub *Subscriber, topic string) {
-					sub.Notify(&Message{
-						topic: topic,
-						body:  msg,
-					})
-				}(sub, topic)
-			}
+	// for _, topic := range topics {
+	if subs, ok := p.topics[topic]; ok {
+		for _, sub := range subs {
+			go func(sub *Subscriber, topic string) {
+				msg := NewMessage(topic, data)
+				collection := sub.topics[topic].Collection
+				if collection == "*" || data.CollectionName == collection {
+					sub.Notify(msg)
+				}
+			}(sub, topic)
 		}
 	}
+	// }
 }

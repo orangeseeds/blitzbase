@@ -1,4 +1,4 @@
-package core
+package store
 
 import (
 	"crypto/rand"
@@ -7,11 +7,17 @@ import (
 	"sync"
 )
 
+type TopicInfo struct {
+	Collection string `json:"collection"`
+	FieldName  string `json:"field_name"`
+	FieldValue any    `json:"field_value"`
+}
+
 type Subscriber struct {
 	id       string
 	buffer   int // size of messages channel
 	messages chan Message
-	topics   map[string]struct{}
+	topics   map[string]TopicInfo
 	active   bool
 	mut      sync.RWMutex
 }
@@ -31,7 +37,7 @@ func NewSubscriber(buffer int) *Subscriber {
 		id:       id,
 		buffer:   buffer,
 		messages: make(chan Message, buffer),
-		topics:   map[string]struct{}{},
+		topics:   map[string]TopicInfo{},
 		active:   true,
 	}
 }
@@ -45,10 +51,10 @@ func (s *Subscriber) GetTopics() []string {
 	return topics
 }
 
-func (s *Subscriber) addTopic(topic string) {
+func (s *Subscriber) addTopic(topic string, rule TopicInfo) {
 	s.mut.Lock()
 	defer s.mut.Unlock()
-	s.topics[topic] = struct{}{}
+	s.topics[topic] = rule
 }
 
 func (s *Subscriber) removeTopic(topic string) {
@@ -64,6 +70,7 @@ func (s *Subscriber) IsActive() bool {
 func (s *Subscriber) Notify(m *Message) {
 	s.mut.Lock()
 	defer s.mut.Unlock()
+	log.Println(*m)
 	if s.active {
 		s.messages <- *m
 	}

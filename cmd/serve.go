@@ -6,16 +6,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewServerCommand() *cobra.Command {
+func NewServerCommand(app *core.App) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "serve",
-		Short: "starts the server defaults to (128.0.0.1:3300)",
+		Short: "starts the server defaults to [:3300]",
 		Run: func(command *cobra.Command, args []string) {
-            publisher := core.NewPublisher()
-			store := core.NewStorage(publisher)
-			app := core.NewApp(store, publisher)
-
-            api.Serve(*app, ":3300")
+			app.Store.Connect()
+			api.Serve(*app, ":3300")
 		},
 	}
 	return command
