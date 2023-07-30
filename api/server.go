@@ -18,6 +18,7 @@ func logger(fn http.HandlerFunc) http.HandlerFunc {
 }
 
 func Serve(app core.App, addr string) {
+
 	mux := http.NewServeMux()
 	rtApp := rtServer{
 		app: app,

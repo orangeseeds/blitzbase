@@ -17,7 +17,6 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		{
-
 			flusher, ok := w.(http.Flusher)
 			if !ok {
 				http.Error(w, "SSE is not supported", http.StatusInternalServerError)
