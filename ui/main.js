@@ -26,11 +26,12 @@ function main() {
     const elem = document.querySelector("#msg")
 
 
-    const bb = new Blitzbase("http://127.0.0.1:3300")
+    const bb = new Blitzbase("https://blitzbase.onrender.com")
     bb.collection("users").subscribe("create", (e) => {
         const data = JSON.parse(e.data)
         elem.innerHTML = JSON.stringify(data)
     })
+
     // const sse = new EventSource("http://127.0.0.1:3300/realtime/")
     //
     // sse.addEventListener("error", (e) => {
@@ -53,15 +54,16 @@ function main() {
 
 async function createUser(name) {
     try {
-        data = {
-            name: name
-        }
-        let resp = await fetch("http://127.0.0.1:3300/realtime/register", {
-            method: "POST",
-            body: JSON.stringify(data),
+        const options = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{"username":"Isai7","email":"Elody26@gmail.com","password":"jYfIf6Ou4dJyKC5"}'
+        };
 
-        })
-        return resp.json()
+        fetch('https://blitzbase.onrender.com/auth/register', options)
+            .then(response => response.json())
+            .then(response => console.log(response))
+            .catch(err => console.error(err));
     } catch (e) {
         console.log(e)
     }

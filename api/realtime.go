@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/orangeseeds/blitzbase/core"
 	"github.com/orangeseeds/blitzbase/store"
 )
@@ -62,10 +63,21 @@ func (api *rtServer) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db := api.app.Store.DB
-	query := fmt.Sprintf("Insert into users (username, email, password) values ('%s', '%s', '%s')", data.Username, data.Email, data.Password)
-	_, err = db.Exec(query)
+	// query := fmt.Sprintf("Insert into users (username, email, password) values ('%s', '%s', '%s')", data.Username, data.Email, data.Password)
+	res, err := api.app.Store.DB.Insert("users", dbx.Params{
+		"username":  data.Username,
+		"email":     data.Email,
+		"passsword": data.Password,
+	}).Execute()
 	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		log.Println(err)
 		return
@@ -73,7 +85,7 @@ func (api *rtServer) createUser(w http.ResponseWriter, r *http.Request) {
 
 	message := map[string]any{
 		"status":  "success",
-		"message": "successfully created new user " + data.Username,
+		"message": fmt.Sprintf("successfully created new user %d", id),
 	}
 	json.NewEncoder(w).Encode(message)
 }
