@@ -87,33 +87,33 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 func (api *rtServer) setSubscriptions(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	// var reqData struct {
-	// 	SubID  string
-	// 	Topics []string
+	var reqData struct {
+		SubID string
+		Topic string
+	}
+
+	// err := r.ParseForm()
+
+	err := json.NewDecoder(r.Body).Decode(&reqData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// cookie, err := r.Cookie("subID")
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusBadRequest)
+	// 	return
 	// }
 
-	err := r.ParseForm()
-
-	// err := json.NewDecoder(r.Body).Decode(&reqData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	cookie, err := r.Cookie("subID")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	//
-	topic := r.PostForm.Get("collection")
+	topic := reqData.Topic
 
-	sub, err := api.app.Store.Publisher.SubByID(cookie.Value)
-	json.NewEncoder(w).Encode(map[string]any{
-		"val":  cookie.Value,
-		"Subs": sub.ID(),
-	})
+	sub, err := api.app.Store.Publisher.SubByID(reqData.SubID)
+	// json.NewEncoder(w).Encode(map[string]any{
+	// 	"val":  cookie.Value,
+	// 	"Subs": sub.ID(),
+	// })
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
