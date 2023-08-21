@@ -29,12 +29,13 @@ func Serve(app core.App, addr string) {
 	// Setting up the API routes
 	apiGroup := chi.NewRouter()
 	{
-		apiGroup.Use(middleware.AllowContentType("application/json"))
+		// apiGroup.Use(middleware.AllowContentType("application/json"))
+		// apiGroup.Use(middleware.AllowContentType("application/x-www-form-urlencoded"))
 		apiGroup.Use(func(h http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Access-Control-Allow-Origin", "*")
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
-				w.Header().Set("Content-Type", "application/json")
+				// w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
 
 				h.ServeHTTP(w, r)
 			})

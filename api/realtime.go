@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -32,6 +31,14 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 
 	sub := store.NewSubscriber(5)
 
+	http.SetCookie(w, &http.Cookie{
+		Name:   "subID",
+		Value:  sub.ID(),
+		Path:   "/",
+		MaxAge: 3600,
+	})
+	flusher.Flush()
+
 	api.app.Store.Publisher.Subscribe(sub)
 
 	life := time.Minute * 5
@@ -42,7 +49,6 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 		select {
 		case data, ok := <-sub.Listen():
 			{
-				log.Println(data)
 				if !ok {
 					break
 				}
@@ -78,15 +84,28 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 
 func (api *rtServer) setSubscriptions(w http.ResponseWriter, r *http.Request) {
 
-	var reqData struct {
-		SubID  string
-		Topics []string
-	}
-	err := json.NewDecoder(r.Body).Decode(&reqData)
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	// var reqData struct {
+	// 	SubID  string
+	// 	Topics []string
+	// }
+
+	err := r.ParseForm()
+
+	// err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	sub := api.app.Store.Publisher.SubByID(reqData.SubID)
-	sub.AddTopics(reqData.Topics...)
+	cookie, err := r.Cookie("subID")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//
+	topic := r.PostForm.Get("collection")
+	sub := api.app.Store.Publisher.SubByID(cookie.Value)
+	sub.AddTopics(topic)
 }

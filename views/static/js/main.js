@@ -30,6 +30,7 @@ function main() {
     bb.collection("users").subscribe("create", (e) => {
         const data = JSON.parse(e.data)
         elem.innerHTML = JSON.stringify(data)
+        console.log(data)
     })
 
     // const sse = new EventSource("http://127.0.0.1:3300/realtime/")
