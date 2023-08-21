@@ -35,7 +35,7 @@ func (m *Message) GetData() HookData {
 	return m.data
 }
 
-func (m *Message) FormatSSE() (string, error) {
+func (m *Message) FormatSSE(subID string) (string, error) {
 	buff := bytes.NewBuffer([]byte{})
 
 	encoder := json.NewEncoder(buff)
@@ -47,6 +47,7 @@ func (m *Message) FormatSSE() (string, error) {
 
 	sb := strings.Builder{}
 
+    sb.WriteString(fmt.Sprintf("subID: %s\n", subID))
 	sb.WriteString(fmt.Sprintf("event: %s\n", m.topic))
 	sb.WriteString(fmt.Sprintf("data: %v\n\n", buff.String()))
 	// log.Println(sb.String())
