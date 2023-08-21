@@ -5,6 +5,10 @@
     <title>
         Testing SSE
     </title>
+
+    <script src="https://unpkg.com/htmx.org@1.9.4"
+        integrity="sha384-zUfuhFKKZCbHTY6aRR46gxiqszMk5tcHjsVFxnUo8VMus4kHGVdIYVbOYYNlKmHV"
+        crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -20,6 +24,17 @@
     <div>
         Message: <span id="msg"> ... </span>
     </div>
+
+
+    <div>
+        <select hx-post="/api/realtime" name="collection" hx-target="#ap" hx-swap="innerHTML">
+            <option value="">none</option>
+            <option value="create">users</option>
+        </select>
+    </div>
+
+<span id="ap"></span>
+
     <script src="{{ .Static }}/js/main.js"></script>
 </body>
 

@@ -56,7 +56,7 @@ func (s *Subscriber) Topics() map[string]struct{} {
 func (s *Subscriber) HasTopic(topic string) bool {
 	s.mut.RLock()
 	defer s.mut.RUnlock()
-	if _, ok := s.topics[topic]; ok {
+	if _, exists := s.topics[topic]; exists {
 		return true
 	}
 	return false

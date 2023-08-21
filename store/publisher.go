@@ -50,10 +50,12 @@ func (p *Publisher) SubCount() int {
 func (p *Publisher) Broadcast(data HookData, topic string) {
 	for _, sub := range p.subs {
 
-		if !sub.HasTopic(topic) {
-			continue
+
+		// log.Println(sub.Topics(), sub.HasTopic(topic))
+		if sub.HasTopic(topic) {
+			go publish(sub, topic, data)
 		}
-		go publish(sub, topic, data)
+		continue
 	}
 }
 

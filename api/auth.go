@@ -34,6 +34,9 @@ func (a *authServer) Router() http.Handler {
 }
 
 func (a *authServer) register(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
 	var data struct {
 		Username string `validate:"required"`
 		Email    string `validate:"required,email"`
