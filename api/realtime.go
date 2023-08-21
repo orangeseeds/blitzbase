@@ -32,6 +32,8 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 	sub := store.NewSubscriber(5)
 	// sub.AddTopics("create")
 
+	api.app.Store.Publisher.Subscribe(sub)
+
 	http.SetCookie(w, &http.Cookie{
 		Name:   "subID",
 		Value:  sub.ID(),
@@ -39,8 +41,6 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 		MaxAge: 3600,
 	})
 	flusher.Flush()
-
-	api.app.Store.Publisher.Subscribe(sub)
 
 	life := time.Minute * 5
 	ctx, cancel := context.WithTimeout(context.Background(), life)

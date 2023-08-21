@@ -1,7 +1,7 @@
 package store
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -36,10 +36,12 @@ func (p *Publisher) SubByID(id string) (*Subscriber, error) {
 	p.mut.RLock()
 	defer p.mut.RUnlock()
 
+    // fmt.Println(p.subs)
 	if sub, ok := p.subs[id]; ok {
 		return sub, nil
 	}
-    return nil, errors.New("no subscriber with the ID exists")
+
+	return nil, fmt.Errorf("no subscriber with the ID %s exists", id)
 }
 
 func (p *Publisher) SubCount() int {
@@ -50,7 +52,6 @@ func (p *Publisher) SubCount() int {
 
 func (p *Publisher) Broadcast(data HookData, topic string) {
 	for _, sub := range p.subs {
-
 
 		// log.Println(sub.Topics(), sub.HasTopic(topic))
 		if sub.HasTopic(topic) && sub.IsActive() {
