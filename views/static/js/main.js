@@ -26,7 +26,7 @@ function main() {
     const elem = document.querySelector("#msg")
 
 
-    const bb = new Blitzbase("https://blitzbase.onrender.com/")
+    const bb = new Blitzbase("https://blitzbase.onrender.com")
     bb.collection("users").subscribe("create", (e) => {
         const data = JSON.parse(e.data)
         elem.innerHTML = JSON.stringify(data)
