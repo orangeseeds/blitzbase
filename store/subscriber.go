@@ -42,8 +42,6 @@ func NewSubscriber(buffer int) *Subscriber {
 }
 
 func (s *Subscriber) ID() string {
-	s.mut.RLock()
-	defer s.mut.RUnlock()
 	return s.id
 }
 
@@ -65,6 +63,7 @@ func (s *Subscriber) HasTopic(topic string) bool {
 func (s *Subscriber) AddTopics(topics ...string) {
 	s.mut.Lock()
 	defer s.mut.Unlock()
+
 	for _, t := range topics {
 		s.topics[t] = struct{}{}
 	}
@@ -79,6 +78,12 @@ func (s *Subscriber) RemoveTopic(topics ...string) {
 			delete(s.topics, t)
 		}
 	}
+}
+
+func (s *Subscriber) Activate() {
+	s.mut.Lock()
+	defer s.mut.Unlock()
+	s.active = true
 }
 
 func (s *Subscriber) Deactivate() {
