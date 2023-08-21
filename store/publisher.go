@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"log"
 	"sync"
 )
 
@@ -36,8 +37,8 @@ func (p *Publisher) SubByID(id string) (*Subscriber, error) {
 	p.mut.RLock()
 	defer p.mut.RUnlock()
 
-    fmt.Println(p.subs)
-    fmt.Println(id)
+	fmt.Println(p.subs)
+	fmt.Println(id)
 	if sub, ok := p.subs[id]; ok {
 		return sub, nil
 	}
@@ -54,7 +55,7 @@ func (p *Publisher) SubCount() int {
 func (p *Publisher) Broadcast(data HookData, topic string) {
 	for _, sub := range p.subs {
 
-		// log.Println(sub.Topics(), sub.HasTopic(topic))
+		log.Println(sub.Topics(), sub.HasTopic(topic))
 		if sub.HasTopic(topic) && sub.IsActive() {
 			go publish(sub, topic, data)
 		}
