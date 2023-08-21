@@ -30,6 +30,7 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sub := store.NewSubscriber(5)
+	// sub.AddTopics("create")
 
 	http.SetCookie(w, &http.Cookie{
 		Name:   "subID",
@@ -106,6 +107,18 @@ func (api *rtServer) setSubscriptions(w http.ResponseWriter, r *http.Request) {
 
 	//
 	topic := r.PostForm.Get("collection")
-	sub := api.app.Store.Publisher.SubByID(cookie.Value)
+
+	sub, err := api.app.Store.Publisher.SubByID(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if topic == "none" {
+		sub.Deactivate()
+	} else {
+		sub.Activate()
+	}
+
 	sub.AddTopics(topic)
 }
