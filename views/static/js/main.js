@@ -26,7 +26,7 @@ function main() {
     const elem = document.querySelector("#msg")
 
 
-    const bb = new Blitzbase("https://blitzbase.onrender.com")
+    const bb = new Blitzbase("https://blitzbase.onrender.com/")
     bb.collection("users").subscribe("create", (e) => {
         const data = JSON.parse(e.data)
         elem.innerHTML = JSON.stringify(data)
@@ -70,8 +70,31 @@ async function createUser(name) {
     }
 }
 
+async function subscribeToTopic(topic) {
+
+    const subID = getCookie('subID');
+    if (!subID) {
+        return
+    }
+    try {
+        const options = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: `{"topic" : "${topic}", "subID" : "${subID}"}`
+        };
+
+        fetch('https://blitzbase.onrender.com/api/realtime', options)
+            .then(response => response.json())
+            .then(response => console.log(response))
+            .catch(err => console.error(err));
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 window.onload = () => {
     const button = document.querySelector("button")
+    const select = document.querySelector("select")
     const input = document.querySelector("input[name=name]")
     let name = ""
 
@@ -86,7 +109,23 @@ window.onload = () => {
         resp = await createUser(name)
         console.log(resp)
     })
+    select.addEventListener("change", async (e) => {
+        resp = await subscribeToTopic(e.target.value)
+        console.log(resp)
+    })
 
     main()
 }
 
+function getCookie(name) {
+    const cookies = document.cookie.split('; ');
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].split('=');
+        if (cookie[0] === name) {
+            return decodeURIComponent(cookie[1]);
+        }
+    }
+    return null;
+}
+
+// Usage
