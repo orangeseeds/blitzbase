@@ -7,7 +7,7 @@ import (
 type Subscribers map[string]*Subscriber
 
 type Publisher struct {
-	topics map[string]Subscribers // map of topic->Subscriber
+	topics map[string]Subscribers // map of id->Subscriber
 	mut    sync.RWMutex
 }
 

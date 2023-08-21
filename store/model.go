@@ -15,15 +15,19 @@ import ()
 // 	Type CollectionType
 // }
 
-type Model interface {}
+type Model interface {
+    
 
+}
+
+// This is the base model struct.
 type BaseModel struct {
 	ID        string
 	CreatedAt string
 	UpdatedAt string
 }
 
-type BaseCollection struct {
+type Collection struct {
     BaseModel
 
     Name string

@@ -2,9 +2,12 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"log"
 
 	"github.com/orangeseeds/blitzbase/core"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func NewAdminCommand(app *core.App) *cobra.Command {
@@ -23,20 +26,30 @@ func createAdminCommand(app *core.App) *cobra.Command {
 	command := &cobra.Command{
 		Use:           "create",
 		Short:         "create new admin",
+		Example:       "blitzbase admin create example@mail.com",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		RunE: func(command *cobra.Command, args []string) error {
 
-			app.Store.Connect()
-
-			if len(args) != 2 {
-				return errors.New("command needs an email and a password")
+			if len(args) != 1 {
+				return errors.New("[admin create] command needs an email")
 			}
 
-			err := app.CreateNewAdmin(args[0], args[1])
+			fmt.Print("Enter password:")
+			pass, err := terminal.ReadPassword(0)
+			fmt.Println("")
 			if err != nil {
 				return err
 			}
+
+			app.Store.Connect()
+
+			_, err = app.CreateNewAdmin(args[0], string(pass))
+			if err != nil {
+				return err
+			}
+
+			log.Printf("New admin %s added\n", args[0])
 
 			return nil
 		},
@@ -46,14 +59,19 @@ func createAdminCommand(app *core.App) *cobra.Command {
 
 func listAdminCommand(app *core.App) *cobra.Command {
 	command := &cobra.Command{
-		Use:   "l",
-		Short: "list all admins",
+		Use:   "list",
+		Short: "lists all admins",
 		RunE: func(command *cobra.Command, args []string) error {
 			app.Store.Connect()
-			err := app.ListAdmins()
+			admins, err := app.ListAdmins()
 			if err != nil {
 				return err
 			}
+
+			for _, admin := range admins {
+				fmt.Println(admin.Email)
+			}
+
 			return nil
 		},
 	}

@@ -18,14 +18,12 @@ type rtServer struct {
 
 func (api *rtServer) Router() http.Handler {
 	r := chi.NewRouter()
-	r.Get("/{action}-{collection}", api.handleRealtime)
-	r.Post("/register", api.createUser)
+	r.Get("", api.handleRealtime)
+	r.Post("", api.setSubscriptions)
 	return r
 }
 
 func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
-	collection := chi.URLParam(r, "collection")
-	action := chi.URLParam(r, "action")
 	w.Header().Set("Content-type", "text/event-stream")
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -48,44 +46,46 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (api *rtServer) createUser(w http.ResponseWriter, r *http.Request) {
+func (api *rtServer) setSubscriptions(w http.ResponseWriter, r *http.Request) {}
 
-	var data struct {
-		Username string
-		Email    string
-		Password string
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		log.Println(err)
-		return
-	}
-
-	// query := fmt.Sprintf("Insert into users (username, email, password) values ('%s', '%s', '%s')", data.Username, data.Email, data.Password)
-	res, err := api.app.Store.DB.Insert("users", dbx.Params{
-		"username":  data.Username,
-		"email":     data.Email,
-		"passsword": data.Password,
-	}).Execute()
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		log.Println(err)
-		return
-	}
-
-	id, err := res.LastInsertId()
-	if err != nil {
-
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		log.Println(err)
-		return
-	}
-
-	message := map[string]any{
-		"status":  "success",
-		"message": fmt.Sprintf("successfully created new user %d", id),
-	}
-	json.NewEncoder(w).Encode(message)
-}
+// func (api *rtServer) createUser(w http.ResponseWriter, r *http.Request) {
+//
+// 	var data struct {
+// 		Username string
+// 		Email    string
+// 		Password string
+// 	}
+//
+// 	err := json.NewDecoder(r.Body).Decode(&data)
+// 	if err != nil {
+// 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+// 		log.Println(err)
+// 		return
+// 	}
+//
+// 	// query := fmt.Sprintf("Insert into users (username, email, password) values ('%s', '%s', '%s')", data.Username, data.Email, data.Password)
+// 	res, err := api.app.Store.DB.Insert("users", dbx.Params{
+// 		"username":  data.Username,
+// 		"email":     data.Email,
+// 		"passsword": data.Password,
+// 	}).Execute()
+// 	if err != nil {
+// 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+// 		log.Println(err)
+// 		return
+// 	}
+//
+// 	id, err := res.LastInsertId()
+// 	if err != nil {
+//
+// 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+// 		log.Println(err)
+// 		return
+// 	}
+//
+// 	message := map[string]any{
+// 		"status":  "success",
+// 		"message": fmt.Sprintf("successfully created new user %d", id),
+// 	}
+// 	json.NewEncoder(w).Encode(message)
+// }

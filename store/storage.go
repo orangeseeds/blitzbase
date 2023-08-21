@@ -30,7 +30,7 @@ func connectDB(driver, path string) *dbx.DB {
 }
 
 func NewStorage(dbPath string) *Storage {
-	log.Println("connecting to ", dbPath)
+	// log.Println("connecting to ", dbPath)
 	publisher := NewPublisher()
 	return &Storage{
 		Path:      dbPath,

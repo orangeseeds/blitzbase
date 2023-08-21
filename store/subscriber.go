@@ -42,6 +42,10 @@ func NewSubscriber(buffer int) *Subscriber {
 	}
 }
 
+func (s *Subscriber) ID() string {
+	return s.id
+}
+
 func (s *Subscriber) GetTopics() []string {
 	topics := []string{}
 
