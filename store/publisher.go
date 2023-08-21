@@ -36,7 +36,8 @@ func (p *Publisher) SubByID(id string) (*Subscriber, error) {
 	p.mut.RLock()
 	defer p.mut.RUnlock()
 
-    // fmt.Println(p.subs)
+    fmt.Println(p.subs)
+    fmt.Println(id)
 	if sub, ok := p.subs[id]; ok {
 		return sub, nil
 	}

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -109,6 +110,10 @@ func (api *rtServer) setSubscriptions(w http.ResponseWriter, r *http.Request) {
 	topic := r.PostForm.Get("collection")
 
 	sub, err := api.app.Store.Publisher.SubByID(cookie.Value)
+	json.NewEncoder(w).Encode(map[string]any{
+		"val":  cookie.Value,
+		"Subs": sub.ID(),
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
