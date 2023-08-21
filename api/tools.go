@@ -11,8 +11,8 @@ import (
 
 func printSQliteVersion(db store.Storage) {
 	var result string
-	row := db.DB.QueryRow("select sqlite_version()")
-	_ = row.Scan(&result)
+	row := db.DB.NewQuery("select sqlite_version()")
+	_ = row.One(&result)
 
 	log.Println(result)
 }

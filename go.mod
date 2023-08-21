@@ -3,9 +3,11 @@ module github.com/orangeseeds/blitzbase
 go 1.20
 
 require (
+	github.com/go-ozzo/ozzo-dbx v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/spf13/cobra v1.7.0
+	golang.org/x/crypto v0.10.0
 )
 
 require (
@@ -25,9 +27,9 @@ require (
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/term v0.9.0 // indirect
 	golang.org/x/text v0.10.0 // indirect
 )
 

@@ -24,7 +24,7 @@ func migrateUpCommand(app *core.App) *cobra.Command {
 		Short: "migrate up",
 		RunE: func(command *cobra.Command, args []string) error {
 			app.Store.Connect()
-			err := core.MigrateUp(app.Store.Path, app.Store.DB)
+			err := core.MigrateUp(app.Store.Path, app.Store.DB.DB())
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -42,7 +42,7 @@ func migrateDownCommand(app *core.App) *cobra.Command {
 		Short: "migrate down",
 		RunE: func(command *cobra.Command, args []string) error {
 			app.Store.Connect()
-			err := core.MigrateDown(app.Store.Path, app.Store.DB)
+			err := core.MigrateDown(app.Store.Path, app.Store.DB.DB())
 			if err != nil {
 				log.Fatalln(err)
 			}

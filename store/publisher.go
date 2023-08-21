@@ -1,65 +1,67 @@
 package store
 
 import (
+	"log"
 	"sync"
 )
 
-type Subscribers map[string]*Subscriber
-
 type Publisher struct {
-	topics map[string]Subscribers // map of topic->Subscriber
-	mut    sync.RWMutex
+	subs map[string]*Subscriber // map of id->Subscriber
+	mut  sync.RWMutex
 }
 
 func NewPublisher() *Publisher {
 	return &Publisher{
-		topics: map[string]Subscribers{},
+		subs: make(map[string]*Subscriber),
 	}
 }
 
-func (p *Publisher) Subscribe(s *Subscriber, topic string, rule TopicInfo) {
+func (p *Publisher) Subscribe(s *Subscriber) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
-	// for _, topic := range topics {
-	if _, ok := p.topics[topic]; !ok {
-		p.topics[topic] = Subscribers{}
-	}
-	s.addTopic(topic, rule)
-	p.topics[topic][s.id] = s
-	// }
+	p.subs[s.ID()] = s
+
 }
 
-func (p *Publisher) Unsubscribe(s *Subscriber, topics ...string) {
+func (p *Publisher) Unsubscribe(id string) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
-	for _, topic := range topics {
-		delete(p.topics[topic], s.id)
-		s.removeTopic(topic)
+	if sub, ok := p.subs[id]; ok {
+		sub.Deactivate()
+		delete(p.subs, id)
 	}
 }
 
-func (p *Publisher) SubCount(topic string) int {
-	if subs, ok := p.topics[topic]; ok {
-		return len(subs)
+func (p *Publisher) SubByID(id string) *Subscriber {
+	p.mut.RLock()
+	defer p.mut.RUnlock()
+
+	if sub, ok := p.subs[id]; ok {
+		return sub
 	}
-	return 0
+	return nil
+}
+
+func (p *Publisher) SubCount() int {
+	p.mut.Lock()
+	defer p.mut.Unlock()
+	return len(p.subs)
 }
 
 func (p *Publisher) Broadcast(data HookData, topic string) {
-	// p.mut.Lock()
-	// defer p.mut.Unlock()
+	for _, sub := range p.subs {
 
-	// for _, topic := range topics {
-	if subs, ok := p.topics[topic]; ok {
-		for _, sub := range subs {
-			go func(sub *Subscriber, topic string) {
-				msg := NewMessage(topic, data)
-				collection := sub.topics[topic].Collection
-				if collection == "*" || data.CollectionName == collection {
-					sub.Notify(msg)
-				}
-			}(sub, topic)
+		if !sub.HasTopic(topic) {
+			continue
 		}
+		go publish(sub, topic, data)
 	}
+}
+
+func publish(s *Subscriber, topic string, data HookData) {
+	msg := NewMessage(topic, data)
+	// collection := s.topics[topic].Collection
+	// if collection == "*" || data.CollectionName == collection {
+	s.Notify(msg)
 	// }
 }

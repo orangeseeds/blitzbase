@@ -1,10 +1,11 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/orangeseeds/blitzbase/core"
@@ -17,14 +18,12 @@ type rtServer struct {
 
 func (api *rtServer) Router() http.Handler {
 	r := chi.NewRouter()
-	r.Get("/{action}-{collection}", api.handleRealtime)
-	r.Post("/register", api.createUser)
+	r.Get("/", api.handleRealtime)
+	r.Post("/", api.setSubscriptions)
 	return r
 }
 
 func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
-	collection := chi.URLParam(r, "collection")
-	action := chi.URLParam(r, "action")
 	w.Header().Set("Content-type", "text/event-stream")
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -32,48 +31,62 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sub := store.NewSubscriber(5)
-	api.app.Store.Publisher.Subscribe(sub, action, store.TopicInfo{
-		Collection: collection,
-	})
 
-	for data := range sub.Listen() {
-		msg, _ := data.FormatSSE()
-		_, err := w.Write([]byte(msg))
-		if err != nil {
-			log.Print("Write Error:", err)
-			return
+	api.app.Store.Publisher.Subscribe(sub)
+
+	life := time.Minute * 5
+	ctx, cancel := context.WithTimeout(context.Background(), life)
+	defer cancel()
+
+	for {
+		select {
+		case data, ok := <-sub.Listen():
+			{
+				log.Println(data)
+				if !ok {
+					break
+				}
+				msg, _ := data.FormatSSE(sub.ID())
+				_, err := w.Write([]byte(msg))
+				if err != nil {
+					log.Print("Write Error:", err)
+					return
+				}
+				flusher.Flush()
+
+				go func(ctx context.Context, cancel context.CancelFunc) {
+					ctx, cancel = context.WithTimeout(context.Background(), life)
+				}(ctx, cancel)
+			}
+		case <-ctx.Done():
+			{
+				if ctx.Err() == context.DeadlineExceeded {
+					log.Printf("SSE connection closed due to inactivity, ID: %s", sub.ID())
+					return
+				} else if ctx.Err() == context.Canceled {
+					log.Printf("SSE connection cancelled, ID: %s", sub.ID())
+					return
+				} else {
+					continue
+				}
+			}
 		}
-		flusher.Flush()
+
 	}
+
 }
 
-func (api *rtServer) createUser(w http.ResponseWriter, r *http.Request) {
+func (api *rtServer) setSubscriptions(w http.ResponseWriter, r *http.Request) {
 
-	var data struct {
-		Username string
-		Email    string
-		Password string
+	var reqData struct {
+		SubID  string
+		Topics []string
 	}
-
-	err := json.NewDecoder(r.Body).Decode(&data)
+	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		log.Println(err)
-		return
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	db := api.app.Store.DB
-	query := fmt.Sprintf("Insert into users (username, email, password) values ('%s', '%s', '%s')", data.Username, data.Email, data.Password)
-	_, err = db.Exec(query)
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		log.Println(err)
-		return
-	}
-
-	message := map[string]any{
-		"status":  "success",
-		"message": "successfully created new user " + data.Username,
-	}
-	json.NewEncoder(w).Encode(message)
+	sub := api.app.Store.Publisher.SubByID(reqData.SubID)
+	sub.AddTopics(reqData.Topics...)
 }
