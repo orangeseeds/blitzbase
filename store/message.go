@@ -16,39 +16,41 @@ Topic
 **/
 
 type Message struct {
-	topic string
-	data  HookData
-}
-
-func NewMessage(topic string, meta HookData) *Message {
-	return &Message{
-		topic: topic,
-		data:  meta,
+	Action string
+	Record struct {
+		ID         string
+		Collection string
 	}
 }
 
-func (m *Message) GetTopic() string {
-	return m.topic
+func NewMessage(action, topic, data string) *Message {
+	return &Message{
+		Action: action,
+		Record: struct {
+			ID         string
+			Collection string
+		}{
+			ID:         data,
+			Collection: topic,
+		},
+	}
 }
 
-func (m *Message) GetData() HookData {
-	return m.data
-}
+func (m *Message) FormatSSE() (string, error) {
 
-func (m *Message) FormatSSE(subID string) (string, error) {
 	buff := bytes.NewBuffer([]byte{})
 
 	encoder := json.NewEncoder(buff)
 
-	err := encoder.Encode(m.data)
+	err := encoder.Encode(m)
 	if err != nil {
 		return "", err
 	}
 
 	sb := strings.Builder{}
 
-    sb.WriteString(fmt.Sprintf("subID: %s\n", subID))
-	sb.WriteString(fmt.Sprintf("event: %s\n", m.topic))
+	// sb.WriteString(fmt.Sprintf("subID: %s\n", subID))
+	sb.WriteString(fmt.Sprintf("event: %s\n", m.Record.Collection))
 	sb.WriteString(fmt.Sprintf("data: %v\n\n", buff.String()))
 	// log.Println(sb.String())
 

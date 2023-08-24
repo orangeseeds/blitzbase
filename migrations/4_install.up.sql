@@ -1,0 +1,1 @@
+CREATE TABLE "_base_collection_posts" ("content" text  NOT NULL, "title" text  NOT NULL);

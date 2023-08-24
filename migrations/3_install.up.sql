@@ -1,0 +1,1 @@
+CREATE TABLE "_base_collection_articles" ("title" text  NOT NULL);

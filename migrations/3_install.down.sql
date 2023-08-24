@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS _base_collection_articles;

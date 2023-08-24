@@ -17,7 +17,8 @@ var rootCmd = &cobra.Command{
 func main() {
 
 	dbPath := "./test.db"
-	store := store.NewStorage(dbPath)
+	migsPath := "./migrations"
+	store := store.NewStorage(dbPath, migsPath)
 	app := core.NewApp(store)
 
 	rootCmd.AddCommand(NewMigrateCommand(app))

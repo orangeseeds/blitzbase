@@ -14,12 +14,12 @@ type TopicInfo struct {
 }
 
 type Subscriber struct {
-	id       string
-	buffer   int // size of messages channel
-	messages chan Message
-	topics   map[string]struct{}
-	active   bool
-	mut      sync.RWMutex
+	id     string
+	buffer int // size of messages channel
+	events chan DBHookEvent
+	topics map[string]struct{}
+	active bool
+	mut    sync.RWMutex
 }
 
 func genRandomID() string {
@@ -33,11 +33,11 @@ func genRandomID() string {
 
 func NewSubscriber(buffer int) *Subscriber {
 	return &Subscriber{
-		id:       genRandomID(),
-		buffer:   buffer,
-		messages: make(chan Message, buffer),
-		topics:   make(map[string]struct{}),
-		active:   true,
+		id:     genRandomID(),
+		buffer: buffer,
+		events: make(chan DBHookEvent, buffer),
+		topics: make(map[string]struct{}),
+		active: true,
 	}
 }
 
@@ -54,10 +54,8 @@ func (s *Subscriber) Topics() map[string]struct{} {
 func (s *Subscriber) HasTopic(topic string) bool {
 	s.mut.RLock()
 	defer s.mut.RUnlock()
-	if _, exists := s.topics[topic]; exists {
-		return true
-	}
-	return false
+	_, exists := s.topics[topic]
+	return exists
 }
 
 func (s *Subscriber) AddTopics(topics ...string) {
@@ -92,23 +90,29 @@ func (s *Subscriber) Deactivate() {
 	s.active = false
 }
 
+func (s *Subscriber) Close() {
+	s.mut.Lock()
+	defer s.mut.Unlock()
+	close(s.events)
+}
+
 func (s *Subscriber) IsActive() bool {
 	s.mut.RLock()
 	defer s.mut.RUnlock()
 	return s.active
 }
 
-func (s *Subscriber) Notify(m *Message) {
+func (s *Subscriber) Notify(m *DBHookEvent) {
 	s.mut.Lock()
 	defer s.mut.Unlock()
 	// log.Println(*m)
 	if s.active {
-		s.messages <- *m
+		s.events <- *m
 	}
 }
 
-func (s *Subscriber) Listen() chan Message {
+func (s *Subscriber) Listen() chan DBHookEvent {
 	s.mut.RLock()
 	defer s.mut.RUnlock()
-	return s.messages
+	return s.events
 }

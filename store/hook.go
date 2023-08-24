@@ -2,16 +2,9 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/mattn/go-sqlite3"
-)
-
-type hkType string
-
-const (
-	Create hkType = "create"
-	Update hkType = "update"
-	Delete hkType = "delete"
 )
 
 type HookData struct {
@@ -51,11 +44,44 @@ func cleanHookData(table string, rowID int64) *HookData {
 }
 
 func handleUpdateHook(pub *Publisher, data *HookData) {
-	pub.Broadcast(*data, "update")
+	pub.Dispatch(DBHookEvent{
+		Message: Message{
+			Action: UPDATE,
+			Record: struct {
+				ID         string
+				Collection string
+			}{
+				fmt.Sprintf("%d", data.RecordID),
+				data.CollectionName,
+			},
+		},
+	})
 }
 func handleDeleteHook(pub *Publisher, data *HookData) {
-	pub.Broadcast(*data, "delete")
+	pub.Dispatch(DBHookEvent{
+		Message: Message{
+			Action: DELETE,
+			Record: struct {
+				ID         string
+				Collection string
+			}{
+				fmt.Sprintf("%d", data.RecordID),
+				data.CollectionName,
+			},
+		},
+	})
 }
 func handleInsertHook(pub *Publisher, data *HookData) {
-	pub.Broadcast(*data, "create")
+	pub.Dispatch(DBHookEvent{
+		Message: Message{
+			Action: INSERT,
+			Record: struct {
+				ID         string
+				Collection string
+			}{
+				fmt.Sprintf("%d", data.RecordID),
+				data.CollectionName,
+			},
+		},
+	})
 }

@@ -22,6 +22,8 @@ func (api *viewServer) Router() http.Handler {
 func (api *viewServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 	temps := []string{
 		"./views/index.html",
+		"./views/components/form.html",
+		"./views/components/selector.html",
 	}
 
 	html, err := template.ParseFiles(temps...)
@@ -32,6 +34,7 @@ func (api *viewServer) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	err = html.Execute(w, map[string]any{
 		"Static": "/static",
+		"Title":  "Dashboard",
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -30,100 +29,98 @@ func (api *rtServer) handleRealtime(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "SSE is not supported", http.StatusInternalServerError)
 	}
 
-	sub := store.NewSubscriber(5)
-	// sub.AddTopics("create")
-
+	sub := store.NewSubscriber(1)
 	api.app.Store.Publisher.Subscribe(sub)
 
 	http.SetCookie(w, &http.Cookie{
-		Name:   "subID",
+		Name:   "subscriber_id",
 		Value:  sub.ID(),
 		Path:   "/",
 		MaxAge: 3600,
 	})
+
 	flusher.Flush()
 
-	life := time.Minute * 5
-	ctx, cancel := context.WithTimeout(context.Background(), life)
-	defer cancel()
+	life := time.Second * 10
+	start := time.Now()
+	timer := time.NewTimer(life)
+
+	handlerEvent := func(w http.ResponseWriter, flusher http.Flusher, e store.DBHookEvent) error {
+		msg, _ := e.Message.FormatSSE()
+		// log.Println(msg, "formatted")
+		_, err := w.Write([]byte(msg))
+		if err != nil {
+			log.Print("Write Error:", err)
+			return err
+		}
+		flusher.Flush()
+
+		return nil
+	}
 
 	for {
 		select {
-		case data, ok := <-sub.Listen():
+		case e := <-sub.Listen():
 			{
-				if !ok {
-					break
-				}
-				msg, _ := data.FormatSSE(sub.ID())
-				_, err := w.Write([]byte(msg))
+				timer.Reset(life)
+				err := handlerEvent(w, flusher, e)
 				if err != nil {
-					log.Print("Write Error:", err)
+					http.Error(w, err.Error(), 500)
 					return
 				}
-				flusher.Flush()
-
-				go func(ctx context.Context, cancel context.CancelFunc) {
-					ctx, cancel = context.WithTimeout(context.Background(), life)
-				}(ctx, cancel)
 			}
-		case <-ctx.Done():
+		case t := <-timer.C:
 			{
-				if ctx.Err() == context.DeadlineExceeded {
-					log.Printf("SSE connection closed due to inactivity, ID: %s", sub.ID())
-					return
-				} else if ctx.Err() == context.Canceled {
-					log.Printf("SSE connection cancelled, ID: %s", sub.ID())
-					return
+				log.Printf("SSE connection closed due to inactivity after %d, ID: %s", int(t.Sub(start).Seconds()), sub.ID())
+				api.app.Store.Publisher.Unsubscribe(sub.ID())
+				// sub.Close()
+				return
+			}
+		case <-r.Context().Done():
+			{
+				if r.Context().Err() == context.Canceled {
+					log.Printf("SSE connection closed by client, ID: %s", sub.ID())
 				} else {
-					continue
+					log.Printf("SSE connection closed, ID: %s, err: %s", sub.ID(), r.Context().Err().Error())
 				}
+				api.app.Store.Publisher.Unsubscribe(sub.ID())
+				// sub.Close()
+				return
 			}
 		}
-
 	}
-
 }
 
 func (api *rtServer) setSubscriptions(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	var reqData struct {
-		SubID string
-		Topic string
-	}
 
-	// err := r.ParseForm()
-
-	err := json.NewDecoder(r.Body).Decode(&reqData)
+	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// cookie, err := r.Cookie("subID")
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusBadRequest)
-	// 	return
-	// }
+	cookie, err := r.Cookie("subscriber_id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	//
-	topic := reqData.Topic
+	topic := r.Form.Get("collection")
+	log.Println(topic)
 
-	sub, err := api.app.Store.Publisher.SubByID(reqData.SubID)
-	// json.NewEncoder(w).Encode(map[string]any{
-	// 	"val":  cookie.Value,
-	// 	"Subs": sub.ID(),
-	// })
+	sub, err := api.app.Store.Publisher.SubByID(cookie.Value)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if topic == "none" {
-		sub.Deactivate()
+		sub.AddTopics(topic)
+		api.app.Store.Publisher.Unsubscribe(sub.ID())
 	} else {
-		sub.Activate()
+		sub.AddTopics(topic)
+		api.app.Store.Publisher.Subscribe(sub)
 	}
-
-	sub.AddTopics(topic)
 }

@@ -9,10 +9,11 @@ import (
 )
 
 type Storage struct {
-	DB        *dbx.DB
-	Driver    string
-	Path      string
-	Publisher *Publisher
+	DB             *dbx.DB
+	Driver         string
+	Path           string
+	Publisher      *Publisher
+	MigrationsPath string
 }
 
 func connectDB(driver, path string) *dbx.DB {
@@ -29,12 +30,13 @@ func connectDB(driver, path string) *dbx.DB {
 	return db
 }
 
-func NewStorage(dbPath string) *Storage {
+func NewStorage(dbPath string, migrationsPath string) *Storage {
 	// log.Println("connecting to ", dbPath)
 	publisher := NewPublisher()
 	return &Storage{
-		Path:      dbPath,
-		Publisher: publisher,
+		Path:           dbPath,
+		Publisher:      publisher,
+		MigrationsPath: migrationsPath,
 		// DB: connectDB(driver, dbPath),
 	}
 }

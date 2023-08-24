@@ -1,0 +1,1 @@
+CREATE TABLE "_base_collection_crits" ("title" text  NOT NULL);

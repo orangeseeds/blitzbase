@@ -2,63 +2,82 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
+	"strings"
 
-	"github.com/go-chi/chi/v5"
 	dbx "github.com/go-ozzo/ozzo-dbx"
-	"github.com/orangeseeds/blitzbase/core"
+	"github.com/orangeseeds/blitzbase/store"
+	"github.com/orangeseeds/blitzbase/utils/migrations"
+	"github.com/orangeseeds/blitzbase/utils/schema"
 )
 
-type collectionServer struct {
-	app core.App
-}
+func (api *collectionServer) handleCollList(w http.ResponseWriter, r *http.Request) {}
 
-func (api collectionServer) Router() http.Handler {
-	r := chi.NewRouter()
-	r.Post("/", api.createUser)
-	return r
-}
+func (api *collectionServer) handleCollCreate(w http.ResponseWriter, r *http.Request) {
 
-func (api *collectionServer) createUser(w http.ResponseWriter, r *http.Request) {
-
-	var data struct {
-		Username string
-		Email    string
-		Password string
+	var req struct {
+		Name   string
+		Type   string
+		Schema []struct {
+			Name     string
+			Type     string
+			Required bool
+			Options  map[string]any
+		}
+		CreateRule string
+		ListRule   string
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&data)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		log.Println(err)
+		http.Error(w, err.Error(), 400)
 		return
 	}
 
-	// query := fmt.Sprintf("Insert into users (username, email, password) values ('%s', '%s', '%s')", data.Username, data.Email, data.Password)
-	res, err := api.app.Store.DB.Insert("users", dbx.Params{
-		"username":  data.Username,
-		"email":     data.Email,
-		"passsword": data.Password,
-	}).Execute()
+	sch := []schema.FieldSchema{}
+	for _, s := range req.Schema {
+		switch strings.ToLower(s.Type) {
+		case "text":
+			sch = append(sch, schema.FieldSchema{
+				Name:     s.Name,
+				Type:     s.Type,
+				Options:  schema.TextFieldOptions{},
+				Required: s.Required,
+			})
+		case "integer":
+			{
+				sch = append(sch, schema.FieldSchema{
+					Name:     s.Name,
+					Type:     s.Type,
+					Options:  schema.IntFieldOptions{},
+					Required: s.Required,
+				})
+
+			}
+		default:
+			continue
+		}
+	}
+
+	err = migrations.CreateNewTable(api.app.Store, store.BaseColletion{
+		Name:   req.Name,
+		Type:   req.Type,
+		Schema: sch,
+	})
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		log.Println(err)
 		return
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
+	schemaJson, _ := json.Marshal(req.Schema)
 
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		log.Println(err)
+	q := api.app.Store.DB.Insert("_collections", dbx.Params{
+		"name":   req.Name,
+		"type":   req.Type,
+		"schema": schemaJson,
+	})
+	_, err = q.Execute()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
 		return
 	}
-
-	message := map[string]any{
-		"status":  "success",
-		"message": fmt.Sprintf("successfully created new user %d", id),
-	}
-	json.NewEncoder(w).Encode(message)
 }

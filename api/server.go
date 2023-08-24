@@ -50,6 +50,7 @@ func Serve(app core.App, addr string) {
 		apiGroup.Mount("/collection", collectionApp.Router())
 	}
 
+
 	// Setting up the view routes
 	viewGroup := viewServer{app: app}
 	mux.Mount("/dashboard", viewGroup.Router())

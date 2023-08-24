@@ -1,0 +1,10 @@
+{{ define "selector" }}
+<div>
+    <h4 class="text-lg font-bold mb-3"> Select Subscription</h4>
+    <select class="select select-bordered w-1/2" hx-post="/api/realtime" hx-target="#sse-msg" hx-swap="innerHTML"
+        name="collection">
+        <option value="none">none</option>
+        <option value="users">users</option>
+    </select>
+</div>
+{{ end }}

@@ -1,24 +1,24 @@
 package core
 
 import (
-	"database/sql"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/orangeseeds/blitzbase/store"
 )
 
 // migrations name need to be like 1_install.up.sql
-func MigrateUp(path string, db *sql.DB) error {
+func MigrateUp(s *store.Storage) error {
 
-	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
+	driver, err := sqlite3.WithInstance(s.DB.DB(), &sqlite3.Config{})
 	if err != nil {
 		log.Println("db instance err: ", err)
 		return err
 	}
 
-	fs, err := (&file.File{}).Open("file://migrations")
+	fs, err := (&file.File{}).Open(s.MigrationsPath)
 	if err != nil {
 		log.Println("opening file err: ", err)
 		return err
@@ -38,15 +38,15 @@ func MigrateUp(path string, db *sql.DB) error {
 	return nil
 }
 
-func MigrateDown(path string, db *sql.DB) error {
+func MigrateDown(s *store.Storage) error {
 
-	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
+	driver, err := sqlite3.WithInstance(s.DB.DB(), &sqlite3.Config{})
 	if err != nil {
 		log.Println("db instance err: ", err)
 		return err
 	}
 
-	fs, err := (&file.File{}).Open("file://migrations")
+	fs, err := (&file.File{}).Open(s.MigrationsPath)
 	if err != nil {
 		log.Println("opening file err: ", err)
 		return err

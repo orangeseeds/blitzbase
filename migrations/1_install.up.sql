@@ -10,7 +10,8 @@ CREATE TABLE _admins (
 CREATE TABLE _collections (
   ID INTEGER PRIMARY KEY,
   name varchar(255) NOT NULL,
-  type integer NOT NULL
+  type integer NOT NULL,
+schema json NOT NULL
 );
 
 CREATE TABLE users (

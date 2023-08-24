@@ -1,6 +1,10 @@
 package store
 
-import ()
+import (
+	"fmt"
+
+	"github.com/orangeseeds/blitzbase/utils/schema"
+)
 
 // type CollectionType int
 //
@@ -15,21 +19,33 @@ import ()
 // 	Type CollectionType
 // }
 
-type Model interface {
-    
+type CollectionType string
 
+const (
+	Base CollectionType = "base"
+	Auth CollectionType = "auth"
+)
+
+type Collection interface {
+	TableName() string
+	TableSchema() map[string]string
 }
 
-// This is the base model struct.
-type BaseModel struct {
-	ID        string
-	CreatedAt string
-	UpdatedAt string
+type BaseColletion struct {
+	ID     int
+	Name   string
+	Type   string
+	Schema []schema.FieldSchema
 }
 
-type Collection struct {
-    BaseModel
+func (bc BaseColletion) TableName() string {
+	return fmt.Sprintf("_base_collection_%s", bc.Name)
+}
 
-    Name string
-    Schema map[string]any
+func (bc BaseColletion) TableSchema() map[string]string {
+	tableSchema := map[string]string{}
+	for _, s := range bc.Schema {
+		tableSchema[s.Name] = s.SQL()
+	}
+	return tableSchema
 }
