@@ -29,7 +29,7 @@ func TestSchemaSQL(t *testing.T) {
 		Got      string
 	}{
 		{"INTEGER  NOT NULL", fs.SQL()},
-		{"INTEGER REFERENCES test_relation(ID) ON DELETE CASCADE NOT NULL", fsRel.SQL()},
+		{"INTEGER NOT NULL REFERENCES test_relation(ID) ON DELETE CASCADE", fsRel.SQL()},
 	}
 
 	for _, c := range cases {

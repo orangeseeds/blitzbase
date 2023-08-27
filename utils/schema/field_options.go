@@ -1,6 +1,8 @@
 package schema
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Options interface {
 	Tags() string
@@ -13,7 +15,7 @@ type TextFieldOptions struct {
 }
 
 func (o TextFieldOptions) Tags() string {
-	return ""
+	return `DEFAULT ""`
 }
 
 type IntFieldOptions struct {
@@ -22,13 +24,13 @@ type IntFieldOptions struct {
 }
 
 func (o IntFieldOptions) Tags() string {
-	return ""
+	return `DEFAULT 0`
 }
 
 type RelationFieldOptions struct {
-	RelatedTable      string
+	RelatedTable      string `validate:"required"`
 	RelatedTableField string
-	CascadingDel      bool
+	CascadingDel      bool `validate:"boolean,required"`
 }
 
 func (o RelationFieldOptions) Tags() string {
@@ -36,4 +38,13 @@ func (o RelationFieldOptions) Tags() string {
 		return fmt.Sprintf("REFERENCES %s(%s) ON DELETE CASCADE", o.RelatedTable, o.RelatedTableField)
 	}
 	return fmt.Sprintf("REFERENCES %s(%s)", o.RelatedTable, o.RelatedTableField)
+}
+
+type TimeStampFieldOptions struct {
+	Before string
+	After  string
+}
+
+func (o TimeStampFieldOptions) Tags() string {
+	return `DEFAULT CURRENT_TIMESTAMP`
 }

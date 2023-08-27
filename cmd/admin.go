@@ -7,7 +7,7 @@ import (
 
 	"github.com/orangeseeds/blitzbase/core"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 func NewAdminCommand(app *core.App) *cobra.Command {
@@ -36,7 +36,7 @@ func createAdminCommand(app *core.App) *cobra.Command {
 			}
 
 			fmt.Print("Enter password:")
-			pass, err := terminal.ReadPassword(0)
+			pass, err := term.ReadPassword(0)
 			fmt.Println("")
 			if err != nil {
 				return err

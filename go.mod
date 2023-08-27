@@ -39,5 +39,6 @@ require (
 	github.com/go-chi/jwtauth/v5 v5.1.1
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/pflag v1.0.5 // indirect
 )

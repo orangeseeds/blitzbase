@@ -9,22 +9,30 @@ import (
 	"github.com/orangeseeds/blitzbase/utils/schema"
 )
 
-func TestCreateNewMigration(t *testing.T) {
-
-	dir := "./test_tmp"
+func preCond(dir string) (*store.Storage, error) {
 	_, err := os.Open(dir)
 	if os.IsNotExist(err) {
 		err = os.Mkdir(dir, 0755)
 		if err != nil {
-			t.Error(err.Error())
+			return nil, err
 		}
 	}
 	if err != nil {
-		t.Error(err.Error())
+		return nil, err
 	}
 
 	p := fmt.Sprintf("%s/migrations", dir)
 	s := store.NewStorage(fmt.Sprintf("%s/test.db", dir), p)
+	return s, nil
+}
+
+func TestCreateNewMigration(t *testing.T) {
+
+	dir := "./test_tmp"
+	s, err := preCond(dir)
+	if err != nil {
+		t.Error(err.Error())
+	}
 	s.Connect()
 
 	fs := schema.FieldSchema{
@@ -52,4 +60,18 @@ func TestCreateNewMigration(t *testing.T) {
 	// if err != nil {
 	// 	t.Error(err.Error())
 	// }
+}
+
+func TestCreateInitTable(t *testing.T) {
+	dir := "./test_tmp"
+	s, err := preCond(dir)
+	if err != nil {
+		t.Error(err.Error())
+	}
+	s.Connect()
+
+	err = CreateInitTable(s)
+	if err != nil {
+		t.Error(err.Error())
+	}
 }

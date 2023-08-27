@@ -1,11 +1,13 @@
 package migrations
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
+	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/orangeseeds/blitzbase/store"
 )
 
@@ -17,8 +19,33 @@ func CreateNewTable(store *store.Storage, c store.Collection) error {
 
 	upSQL := fmt.Sprintf("%s;", q.SQL())
 	downSQL := fmt.Sprintf(`DROP TABLE IF EXISTS %s;`, c.TableName())
-	CreateNewMigration(upSQL, downSQL, store.MigrationsPath)
+	if err := CreateNewMigration(upSQL, downSQL, store.MigrationsPath); err != nil {
+		return err
+	}
 
+	return nil
+}
+
+func AddCollectionRecord(s *store.Storage, c store.Collection) error {
+
+	cType := store.BaseType
+	if c.IsAuth() {
+		cType = store.AuthType
+	}
+
+	schemaJson, _ := json.Marshal(c.RawSchema())
+
+	q := s.DB.Insert("_collections", dbx.Params{
+		"name":   c.TableName(),
+		"type":   cType,
+		"schema": schemaJson,
+	})
+
+	_, err := q.Execute()
+
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

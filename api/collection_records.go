@@ -22,26 +22,49 @@ func (api collectionServer) Router() http.Handler {
 	r.Get("/", api.handleCollList)
 	r.Post("/", api.handleCollCreate)
 
-	r.Get("/{collection}/records/", api.handleList)
-	r.Get("/{collection}/records/{id}", api.handleView)
-	r.Post("/{collection}/records", api.handleCreate)
-	r.Patch("/{collection}/records", api.handleUpdate)
-	r.Delete("/{collection}/records/{id}", api.handleDelete)
+	r.Get("/{collection}/records/", api.list)
+	r.Get("/{collection}/records/{id}", api.view)
+	r.Post("/{collection}/records", api.create)
+	r.Patch("/{collection}/records", api.update)
+	r.Delete("/{collection}/records/{id}", api.delete)
 	return r
 }
 
-func (api *collectionServer) handleList(w http.ResponseWriter, r *http.Request) {
+func (api *collectionServer) list(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// var users []struct {
-	// 	Username string `json:"username"`
-	// 	Email    string `json:"email"`
-	// }
+	records := []dbx.NullStringMap{}
+	record := dbx.NullStringMap{}
+
+	q := api.app.Store.DB.Select("*").From("_base_collection_" + chi.URLParam(r, "collection"))
+
+	rows, err := q.Rows()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	for rows.Next() {
+		err := rows.ScanMap(record)
+
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		records = append(records, record)
+	}
+
+	json.NewEncoder(w).Encode(records)
+}
+
+func (api *collectionServer) view(w http.ResponseWriter, r *http.Request) {
 
 	users := []dbx.NullStringMap{}
 	user := dbx.NullStringMap{}
 
-	q := api.app.Store.DB.Select("*").From(chi.URLParam(r, "collection"))
+	q := api.app.Store.DB.Select("*").From("_base_collection_" + chi.URLParam(r, "collection")).Where(dbx.HashExp{
+		"id": chi.URLParam(r, "id"),
+	})
 
 	rows, err := q.Rows()
 	if err != nil {
@@ -61,10 +84,26 @@ func (api *collectionServer) handleList(w http.ResponseWriter, r *http.Request) 
 
 	json.NewEncoder(w).Encode(users)
 }
-func (api *collectionServer) handleView(w http.ResponseWriter, r *http.Request)   {}
-func (api *collectionServer) handleCreate(w http.ResponseWriter, r *http.Request) {}
-func (api *collectionServer) handleUpdate(w http.ResponseWriter, r *http.Request) {}
-func (api *collectionServer) handleDelete(w http.ResponseWriter, r *http.Request) {}
+
+func (api *collectionServer) create(w http.ResponseWriter, r *http.Request) {
+
+	var form map[string]any
+	err := json.NewDecoder(r.Body).Decode(&form)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	q := api.app.Store.DB.Insert("_base_collection_"+chi.URLParam(r, "collection"), form)
+
+	if _, err := q.Execute(); err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+}
+func (api *collectionServer) update(w http.ResponseWriter, r *http.Request) {}
+func (api *collectionServer) delete(w http.ResponseWriter, r *http.Request) {}
 
 func (api *collectionServer) createUser(w http.ResponseWriter, r *http.Request) {
 

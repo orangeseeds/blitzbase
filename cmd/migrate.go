@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/orangeseeds/blitzbase/core"
+	"github.com/orangeseeds/blitzbase/utils/migrations"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +16,7 @@ func NewMigrateCommand(app *core.App) *cobra.Command {
 
 	migrateCmd.AddCommand(migrateUpCommand(app))
 	migrateCmd.AddCommand(migrateDownCommand(app))
+	migrateCmd.AddCommand(migrateNewCommand(app))
 	return migrateCmd
 }
 
@@ -25,7 +27,7 @@ func migrateUpCommand(app *core.App) *cobra.Command {
 		RunE: func(command *cobra.Command, args []string) error {
 			app.Store.Connect()
 
-			err := core.MigrateUp(app.Store)
+			err := migrations.MigrateUp(app.Store)
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -43,11 +45,28 @@ func migrateDownCommand(app *core.App) *cobra.Command {
 		Short: "migrate down",
 		RunE: func(command *cobra.Command, args []string) error {
 			app.Store.Connect()
-			err := core.MigrateDown(app.Store)
+			err := migrations.MigrateDown(app.Store)
 			if err != nil {
 				log.Fatalln(err)
 			}
 			fmt.Println("ran migrations down")
+			return nil
+		},
+	}
+	return command
+}
+
+func migrateNewCommand(app *core.App) *cobra.Command {
+	command := &cobra.Command{
+		Use:   "new",
+		Short: "migrate new",
+		RunE: func(command *cobra.Command, args []string) error {
+			app.Store.Connect()
+			err := migrations.CreateInitTable(app.Store)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			fmt.Println("ran migrations new")
 			return nil
 		},
 	}
