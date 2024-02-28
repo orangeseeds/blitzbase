@@ -8,6 +8,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// TODO: Look into this library which is free of c-go instead of go-sqlite3
+// https://gitlab.com/cznic/sqlite/-/blob/master/examples/example1/main.go?ref_type=heads
+
 type Storage struct {
 	DB             *dbx.DB
 	Driver         string
