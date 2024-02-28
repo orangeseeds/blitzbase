@@ -35,23 +35,7 @@ func (s *BaseStore) CreateCollectionTable(c *model.Collection) error {
 		return fmt.Errorf("Table with name %s already exists.", c.GetName())
 	}
 
-	json, err := c.Schema.MarshalJSON()
-	if err != nil {
-		return err
-	}
-
-	_, err = s.DB().Insert(c.TableName(), dbx.Params{
-		"Id":     c.GetID(),
-		"Name":   c.GetName(),
-		"Type":   c.Type,
-		"Schema": string(json),
-		"Rule":   c.Rule,
-	}).Execute()
-	if err != nil {
-		return err
-	}
-
-	err = s.createTable(c.GetName(), c.DataDefn())
+    err := s.createTable(c.GetName(), c.DataDefn())
 	if err != nil {
 		return err
 	}

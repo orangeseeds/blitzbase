@@ -41,39 +41,42 @@ func (s *BaseStore) FindCollectionByNameorId(db any, query string) (*model.Colle
 }
 
 func (s *BaseStore) SaveCollection(db any, col *model.Collection) error {
-	json, err := col.Schema.MarshalJSON()
-	if err != nil {
-		return err
-	}
-
-	switch db.(type) {
-	case *dbx.Tx:
-		_, err = db.(*dbx.Tx).Insert(col.TableName(), dbx.Params{
-			"Id":     col.GetID(),
-			"Name":   col.GetName(),
-			"Type":   col.Type,
-			"Schema": string(json),
-			"Rule":   col.Rule,
-		}).Execute()
+	err := db.(*dbx.DB).Transactional(func(tx *dbx.Tx) error {
+		json, err := col.Schema.MarshalJSON()
 		if err != nil {
 			return err
 		}
-	case *dbx.DB:
-		_, err = db.(*dbx.DB).Insert(col.TableName(), dbx.Params{
-			"Id":     col.GetID(),
-			"Name":   col.GetName(),
-			"Type":   col.Type,
-			"Schema": string(json),
-			"Rule":   col.Rule,
-		}).Execute()
-		if err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("Type didnot fit in saveCollection!")
-	}
+        col.SetName(col.Name)
 
-	return nil
+		switch db.(type) {
+		case *dbx.Tx:
+			_, err = db.(*dbx.Tx).Insert(col.TableName(), dbx.Params{
+				"Id":     col.GetID(),
+				"Name":   col.GetName(),
+				"Type":   col.Type,
+				"Schema": string(json),
+				"Rule":   col.Rule,
+			}).Execute()
+			if err != nil {
+				return err
+			}
+		case *dbx.DB:
+			_, err = db.(*dbx.DB).Insert(col.TableName(), dbx.Params{
+				"Id":     col.GetID(),
+				"Name":   col.GetName(),
+				"Type":   col.Type,
+				"Schema": string(json),
+				"Rule":   col.Rule,
+			}).Execute()
+			if err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("Type didnot fit in saveCollection!")
+		}
+		return nil
+	})
+	return err
 }
 
 func (s *BaseStore) DeleteCollection(db any, col *model.Collection) error {

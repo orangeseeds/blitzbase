@@ -57,11 +57,24 @@ func (r *Record) Set(key string, val any) {
 
 func (r *Record) Export() map[string]any {
 	toExport := make(map[string]any)
-	toExport = r.data
+	if r.data != nil {
+		toExport = r.data
+	}
 	toExport[Id] = r.Id
 	return toExport
 }
 
 func (r Record) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.Export())
+}
+
+func (r *Record) UnmarshalJSON(data []byte) error {
+	res := map[string]any{}
+
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+	r.Load(res)
+
+	return nil
 }

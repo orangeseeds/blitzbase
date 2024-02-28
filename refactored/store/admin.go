@@ -7,6 +7,27 @@ import (
 	model "github.com/orangeseeds/blitzbase/refactored/models"
 )
 
+func (s *BaseStore) FindAdminById(db any, id string) (*model.Admin, error) {
+	var admin model.Admin
+	var selectQuery *dbx.SelectQuery
+	switch db.(type) {
+	case *dbx.Tx:
+		selectQuery = db.(*dbx.Tx).Select()
+	case *dbx.DB:
+		selectQuery = db.(*dbx.DB).Select()
+	default:
+		return nil, fmt.Errorf("Type didnot fit in FindAdminByEmail!")
+	}
+
+	err := selectQuery.From(admin.TableName()).Where(dbx.HashExp{
+		"Id": id,
+	}).One(&admin)
+	if err != nil {
+		return nil, err
+	}
+	return &admin, nil
+}
+
 func (s *BaseStore) FindAdminByEmail(db any, email string) (*model.Admin, error) {
 	var admin model.Admin
 	var selectQuery *dbx.SelectQuery
@@ -75,11 +96,26 @@ func (s *BaseStore) CheckAdminEmailIsUnique(db any, email string) bool {
 }
 
 func (s *BaseStore) SaveAdmin(db any, a *model.Admin) error {
+	if !s.CheckAdminEmailIsUnique(db, a.Email) {
+		return fmt.Errorf("admin email %s not unique", a.Email)
+	}
+
 	switch db.(type) {
 	case *dbx.Tx:
 		return db.(*dbx.Tx).Model(a).Insert()
 	case *dbx.DB:
 		return db.(*dbx.DB).Model(a).Insert()
+	default:
+		return fmt.Errorf("Type didnot fit in FindCollection!")
+	}
+}
+
+func (s *BaseStore) UpdateAdmin(db any, a *model.Admin) error {
+	switch db.(type) {
+	case *dbx.Tx:
+		return db.(*dbx.Tx).Model(a).Update()
+	case *dbx.DB:
+		return db.(*dbx.DB).Model(a).Update()
 	default:
 		return fmt.Errorf("Type didnot fit in FindCollection!")
 	}

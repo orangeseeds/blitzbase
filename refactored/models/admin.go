@@ -10,11 +10,11 @@ import (
 type Admin struct {
 	BaseModel
 
-	Email    string
-	Token    string
-	Password string // hash
+    Email    string `db:"Email"`
+    Token    string`db:"Token"`
+    Password string `db:"Password"`// hash
 
-	Rule string // for now all rules
+    Rule string `db:"Rule"`// for now all rules
 }
 
 func (a *Admin) TableName() string {

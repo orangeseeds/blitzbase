@@ -2,12 +2,13 @@ package store
 
 import (
 	"fmt"
+	"log"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	model "github.com/orangeseeds/blitzbase/refactored/models"
 )
 
-func (s *BaseStore) FindRecordById(db any, id string, colName string, filters ...FilterFunc) (*model.Record, error) {
+func (s *BaseStore) FindRecordsAll(db any, colName string, filters ...FilterFunc) ([]*model.Record, error) {
 	var selectQuery *dbx.SelectQuery
 	switch db.(type) {
 	case *dbx.Tx:
@@ -22,9 +23,52 @@ func (s *BaseStore) FindRecordById(db any, id string, colName string, filters ..
 	if err != nil {
 		return nil, err
 	}
+
+	q := selectQuery.From(col.Name)
+	for _, filter := range filters {
+		if filter == nil {
+			continue
+		}
+		err := filter(q)
+		if err != nil {
+			return nil, err
+		}
+	}
+	records := []*model.Record{}
+	resp := []dbx.NullStringMap{}
+	err = q.All(&resp)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range resp {
+		rec := model.NewRecord(col)
+		rec.LoadNullStringMap(resp[i])
+		records = append(records, rec)
+	}
+	return records, nil
+
+}
+
+func (s *BaseStore) FindRecordById(db any, id string, colName string, filters ...FilterFunc) (*model.Record, error) {
+	var selectQuery *dbx.SelectQuery
+	switch db.(type) {
+	case *dbx.Tx:
+		selectQuery = db.(*dbx.Tx).Select().From(colName)
+	case *dbx.DB:
+		selectQuery = db.(*dbx.DB).Select().From(colName)
+	default:
+		return nil, fmt.Errorf("Type didnot fit in FindCollection!")
+	}
+
+	col, err := s.FindCollectionByNameorId(db, colName)
+	if err != nil {
+		log.Println("collection not found")
+		return nil, err
+	}
 	rec := model.NewRecord(col)
 
-	q := selectQuery.From(col.Name).AndWhere(dbx.HashExp{
+	q := selectQuery.AndWhere(dbx.HashExp{
 		"Id": id,
 	})
 	for _, filter := range filters {
@@ -38,8 +82,10 @@ func (s *BaseStore) FindRecordById(db any, id string, colName string, filters ..
 	}
 
 	resp := dbx.NullStringMap{}
-	err = q.Limit(1).One(resp)
+	err = q.One(&resp)
+	log.Println(q.Build().SQL(), id, colName)
 	if err != nil {
+		log.Println("record not found")
 		return nil, err
 	}
 	rec.LoadNullStringMap(resp)

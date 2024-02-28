@@ -1,15 +1,16 @@
 package api
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/orangeseeds/blitzbase/refactored/core"
 	model "github.com/orangeseeds/blitzbase/refactored/models"
+	"github.com/orangeseeds/blitzbase/refactored/store"
 )
 
 func LoadCollectionAPI(app core.App, e *echo.Echo) {
 	api := CollectionAPI{app: app}
 
-	grp := e.Group("/collections")
+	grp := e.Group("/collections", LoadJWT(), NeedsAdminAuth())
 
 	grp.GET("", api.index)
 	grp.GET("/:collection", api.detail)
@@ -22,8 +23,9 @@ type CollectionAPI struct {
 }
 
 func (a *CollectionAPI) index(c echo.Context) error {
+	var colOne model.Collection
 	var col []model.Collection
-	err := a.app.Store().DB().Select().From("_collection").All(&col)
+	err := a.app.Store().DB().Select().From(colOne.TableName()).All(&col)
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
@@ -32,10 +34,10 @@ func (a *CollectionAPI) index(c echo.Context) error {
 }
 
 func (a *CollectionAPI) detail(c echo.Context) error {
-    name := c.Param("collection")
+	name := c.Param("collection")
 	col, err := a.app.Store().FindCollectionByNameorId(a.app.Store().DB(), name)
 	if err != nil {
-		return err
+		return c.JSON(500, err.Error())
 	}
 	return c.JSON(200, map[string]any{
 		"collection": col,
@@ -44,22 +46,38 @@ func (a *CollectionAPI) detail(c echo.Context) error {
 
 func (a *CollectionAPI) save(c echo.Context) error {
 	var col model.Collection
-	err := a.app.Store().SaveCollection(a.app.Store().DB(), &col)
+
+	err := c.Bind(&col)
 	if err != nil {
-		return err
+		return c.JSON(500, err.Error())
 	}
+
+	err = a.app.Store().SaveCollection(a.app.Store().DB(), &col)
+	if err != nil {
+		return c.JSON(500, err.Error())
+	}
+	if !a.app.Store().(*store.BaseStore).TableExists(col.GetName()) {
+		err = a.app.Store().CreateCollectionTable(&col)
+		if err != nil {
+		return c.JSON(500, err.Error())
+		}
+	}
+
 	return c.JSON(200, map[string]any{
-		"message": "saved successfully",
+		"message":    "saved successfully",
+		"collection": col,
 	})
 }
 
 func (a *CollectionAPI) delete(c echo.Context) error {
 	var col model.Collection
+	col.SetID(c.Param("collection"))
 	err := a.app.Store().DeleteCollection(a.app.Store().DB(), &col)
 	if err != nil {
-		return err
+		return c.JSON(500, err.Error())
 	}
 	return c.JSON(200, map[string]any{
-		"message": "deleted successfully",
+		"message":    "deleted successfully",
+		"collection": col,
 	})
 }

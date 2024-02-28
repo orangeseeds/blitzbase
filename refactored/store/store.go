@@ -19,12 +19,15 @@ type Store interface {
 	SaveCollection(any, *model.Collection) error
 	DeleteCollection(any, *model.Collection) error
 
+	FindAdminById(any, string) (*model.Admin, error)
 	FindAdminByEmail(any, string) (*model.Admin, error)
 	FindAdminByToken(any, string) (*model.Admin, error)
 	CheckAdminEmailIsUnique(any, string) bool
 	SaveAdmin(any, *model.Admin) error
+	UpdateAdmin(any, *model.Admin) error
 	DeleteAdmin(any, *model.Admin) error
 
+	FindRecordsAll(any, string,...FilterFunc) ([]*model.Record, error)
 	FindRecordById(any, string, string, ...FilterFunc) (*model.Record, error)
 	// FindRecordsByExpr(...dbx.Expression) ([]*model.Record, error)
 	SaveRecord(any, *model.Record, ...FilterFunc) error
