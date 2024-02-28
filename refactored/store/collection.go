@@ -1,7 +1,6 @@
 package store
 
 import (
-	"encoding/json"
 	"fmt"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
@@ -27,28 +26,13 @@ func (s *BaseStore) FindCollectionByNameorId(db any, query string) (*model.Colle
 		return nil, fmt.Errorf("Type didnot fit in FindCollection!")
 	}
 
-	res, err := selectQuery.From(
+	err := selectQuery.From(
 		col.TableName(),
 	).Where(
 		dbx.HashExp{"Name": query},
 	).OrWhere(
 		dbx.HashExp{"Id": query},
-	).Rows()
-	if err != nil {
-		return nil, err
-	}
-
-	var id, name, tp, schema, rule string
-	for res.Next() {
-		res.Scan(&id, &name, &tp, &schema, &rule)
-	}
-
-	col.Id = id
-	col.Name = name
-	col.Type = model.CollectionType(tp)
-	col.Rule = rule
-
-	err = json.Unmarshal([]byte(schema), &col.Schema)
+	).One(&col)
 	if err != nil {
 		return nil, err
 	}

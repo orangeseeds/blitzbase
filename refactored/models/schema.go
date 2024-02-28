@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/orangeseeds/blitzbase/utils"
@@ -42,7 +43,7 @@ type Field struct {
 }
 
 type Schema struct {
-    Fields []*Field 
+	Fields []*Field `json:"Fields"`
 }
 
 func (s *Schema) GetFields() []*Field {
@@ -84,6 +85,27 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 		s.AddField(&f)
 	}
 	return nil
+}
+
+// into the current Schema instance.
+func (s *Schema) Scan(value any) error {
+	var data []byte
+	switch v := value.(type) {
+	case nil:
+		// no cast needed
+	case []byte:
+		data = v
+	case string:
+		data = []byte(v)
+	default:
+		return fmt.Errorf("Failed to unmarshal Schema value %q.", value)
+	}
+
+	if len(data) == 0 {
+		data = []byte("[]")
+	}
+
+	return s.UnmarshalJSON(data)
 }
 
 func (s *Schema) HasField(name string) bool {

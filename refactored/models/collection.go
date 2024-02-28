@@ -59,7 +59,7 @@ func (c *Collection) DataDefn() map[string]string {
 
 func (c *Collection) MetaDataDefn() map[string]string {
 	return map[string]string{
-		"Id":     string(Text)+" primary key",
+		"Id":     string(Text) + " primary key",
 		"Name":   string(Text),
 		"Type":   string(Text),
 		"Schema": string(Json),
@@ -70,15 +70,4 @@ func (c *Collection) MetaDataDefn() map[string]string {
 func (c Collection) MarshalJSON() ([]byte, error) {
 	type alias Collection // prevent recursion
 	return json.Marshal(alias(c))
-}
-
-func (c *Collection) UnmarshalJSONSchema(data []byte) error {
-	var schema Schema
-
-	err := json.Unmarshal(data, &schema)
-	if err != nil {
-		return err
-	}
-	c.Schema = schema
-	return nil
 }

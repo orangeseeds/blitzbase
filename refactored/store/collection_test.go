@@ -8,6 +8,22 @@ import (
 	model "github.com/orangeseeds/blitzbase/refactored/models"
 )
 
+func TestAllCollection(t *testing.T) {
+
+	db, err := dbx.Open("sqlite3", "./test.db")
+	if err != nil {
+		t.Error(err)
+	}
+	var col []model.Collection
+    err =db.Select().From("_collection").All(&col)
+    if err != nil {
+        t.Error(err)
+    }
+    t.Log(col)
+
+
+}
+
 func TestFindCollectionByName(t *testing.T) {
 	db, err := dbx.Open("sqlite3", "./test.db")
 	if err != nil {

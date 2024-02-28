@@ -15,19 +15,19 @@ type Store interface {
 	CreateCollectionTable(*model.Collection) error
 	// CreateMigrationsTable() error
 
-	FindCollectionByNameorId(string) (*model.Collection, error)
-	SaveCollection(*model.Collection) error
-	DeleteCollection(*model.Collection) error
+	FindCollectionByNameorId(any, string) (*model.Collection, error)
+	SaveCollection(any, *model.Collection) error
+	DeleteCollection(any, *model.Collection) error
 
-	FindAdminByEmail(string) (*model.Admin, error)
-	FindAdminByToken(string) (*model.Admin, error)
-	CheckAdminEmailIsUnique(string) bool
-	SaveAdmin(*model.Admin) error
-	DeleteAdmin(*model.Admin) error
+	FindAdminByEmail(any, string) (*model.Admin, error)
+	FindAdminByToken(any, string) (*model.Admin, error)
+	CheckAdminEmailIsUnique(any, string) bool
+	SaveAdmin(any, *model.Admin) error
+	DeleteAdmin(any, *model.Admin) error
 
-	FindRecordById(string, string, ...FilterFunc) (*model.Record, error)
+	FindRecordById(any, string, string, ...FilterFunc) (*model.Record, error)
 	// FindRecordsByExpr(...dbx.Expression) ([]*model.Record, error)
-	SaveRecord(*model.Record, ...FilterFunc) error
+	SaveRecord(any, *model.Record, ...FilterFunc) error
 	DeleteRecord(*model.Record) error
 
 	// ExpandRecord()
