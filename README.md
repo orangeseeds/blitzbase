@@ -8,4 +8,6 @@ Blitzbase is a project inspired by pocketbase & supabase with realtime subscript
 $   go run ./cmd/
 ```
 
-To see it in action open index.html from inside the [ui](https://github.com/orangeseeds/Blitzbase/tree/main/ui) folder.
+<!--
+ To see it in action open index.html from inside the [ui](https://github.com/orangeseeds/Blitzbase/tree/main/ui) folder.
+-->
