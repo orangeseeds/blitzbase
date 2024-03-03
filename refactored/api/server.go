@@ -19,6 +19,7 @@ func SetupServer(app core.App) *echo.Echo {
 	LoadAdminAPI(app, e)
 	LoadCollectionAPI(app, e)
 	LoadRecordAPI(app, e)
+    LoadAuthRecordAPI(app,e)
 
 	return e
 }

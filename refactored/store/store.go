@@ -27,11 +27,13 @@ type Store interface {
 	UpdateAdmin(any, *model.Admin) error
 	DeleteAdmin(any, *model.Admin) error
 
-	FindRecordsAll(any, string,...FilterFunc) ([]*model.Record, error)
+	AuthRecordEmailIsUnique(any, string, string) bool
+	FindAuthRecordByEmail(any, string, string) (*model.Record, error)
+	FindRecordsAll(any, string, ...FilterFunc) ([]*model.Record, error)
 	FindRecordById(any, string, string, ...FilterFunc) (*model.Record, error)
 	// FindRecordsByExpr(...dbx.Expression) ([]*model.Record, error)
 	SaveRecord(any, *model.Record, ...FilterFunc) error
-	DeleteRecord(*model.Record) error
+	DeleteRecord(any, *model.Record) error
 
 	// ExpandRecord()
 }

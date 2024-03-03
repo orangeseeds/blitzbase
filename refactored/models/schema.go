@@ -10,24 +10,43 @@ import (
 
 type FieldType string
 
+func (f FieldType) String() string {
+	return string(f)
+}
+
 const (
 	Text     FieldType = "text"
 	Number   FieldType = "number"
 	Bool     FieldType = "bool"
-	Email    FieldType = "email"
-	Url      FieldType = "url"
-	Editor   FieldType = "editor"
 	Date     FieldType = "date"
-	Select   FieldType = "select"
 	Json     FieldType = "json"
 	File     FieldType = "file"
 	Relation FieldType = "relation"
 )
 
+type FieldName string
+
 // basic fields
 const (
-	Id = "Id"
+	FieldId       FieldName = "Id"
+	FieldEmail    FieldName = "Email"
+	FieldToken    FieldName = "Token"
+	FieldRule     FieldName = "Rule"
+	FieldPassword FieldName = "Password"
 )
+
+func AuthFields() []string {
+	return []string{
+		FieldPassword.String(),
+		FieldEmail.String(),
+		FieldToken.String(),
+		FieldPassword.String(),
+	}
+}
+
+func (f FieldName) String() string {
+	return string(f)
+}
 
 type FieldOption interface {
 	Validate() error

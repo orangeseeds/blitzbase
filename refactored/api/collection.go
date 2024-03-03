@@ -5,6 +5,7 @@ import (
 	"github.com/orangeseeds/blitzbase/refactored/core"
 	model "github.com/orangeseeds/blitzbase/refactored/models"
 	"github.com/orangeseeds/blitzbase/refactored/store"
+	"github.com/orangeseeds/blitzbase/utils"
 )
 
 func LoadCollectionAPI(app core.App, e *echo.Echo) {
@@ -52,6 +53,21 @@ func (a *CollectionAPI) save(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
+	if col.IsAuth() {
+		for _, v := range model.AuthFields() {
+
+			if !col.Schema.HasField(v) {
+				f := model.Field{
+					Id:      utils.RandStr(10),
+					Name:    v,
+					Type:    model.Text,
+					Options: nil,
+				}
+				col.Schema.AddField(&f)
+			}
+		}
+	}
+
 	err = a.app.Store().SaveCollection(a.app.Store().DB(), &col)
 	if err != nil {
 		return c.JSON(500, err.Error())
@@ -59,7 +75,7 @@ func (a *CollectionAPI) save(c echo.Context) error {
 	if !a.app.Store().(*store.BaseStore).TableExists(col.GetName()) {
 		err = a.app.Store().CreateCollectionTable(&col)
 		if err != nil {
-		return c.JSON(500, err.Error())
+			return c.JSON(500, err.Error())
 		}
 	}
 

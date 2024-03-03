@@ -62,6 +62,10 @@ func (a *RecordAPI) save(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
+	if col.IsAuth() {
+		record.SetPassword(record.GetString(model.FieldPassword.String()))
+	}
+
 	err = a.app.Store().SaveRecord(a.app.Store().DB(), record)
 	if err != nil {
 		return c.JSON(500, err.Error())
@@ -76,7 +80,7 @@ func (a *RecordAPI) save(c echo.Context) error {
 func (a *RecordAPI) delete(c echo.Context) error {
 	col := c.Get(string(utils.JWTCollection)).(*model.Collection)
 	record := model.NewRecord(col)
-	err := a.app.Store().DeleteRecord(record)
+	err := a.app.Store().DeleteRecord(a.app.Store().DB(), record)
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}

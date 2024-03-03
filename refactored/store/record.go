@@ -83,7 +83,7 @@ func (s *BaseStore) FindRecordById(db any, id string, colName string, filters ..
 
 	resp := dbx.NullStringMap{}
 	err = q.One(&resp)
-	log.Println(q.Build().SQL(), id, colName)
+	// log.Println(q.Build().SQL(), id, colName)
 	if err != nil {
 		log.Println("record not found")
 		return nil, err
@@ -92,11 +92,46 @@ func (s *BaseStore) FindRecordById(db any, id string, colName string, filters ..
 	return rec, nil
 }
 
+func (s *BaseStore) AuthRecordEmailIsUnique(db any, collection string, email string) bool {
+	var selectQuery *dbx.SelectQuery
+	switch db.(type) {
+	case *dbx.Tx:
+		selectQuery = db.(*dbx.Tx).Select("count(*)")
+	case *dbx.DB:
+		selectQuery = db.(*dbx.DB).Select("count(*)")
+	default:
+		return false
+	}
+	if email == "" {
+		return false
+	}
+	query := selectQuery.From(collection).
+		Where(dbx.HashExp{model.FieldEmail.String(): email}).
+		Limit(1)
+
+    log.Println(query.Build().SQL())
+	var exists bool
+
+	return query.Row(&exists) == nil && !exists
+}
+
 // Make sure to get the collection from the table before sending the record
 func (s *BaseStore) SaveRecord(db any, r *model.Record, filters ...FilterFunc) error {
 	// do a dry run to save the record
 	// check whether you can view the record or not
 	// if you can view the record save, else rollback the transaction
+
+	if r.Collection().IsAuth() {
+		for _, v := range model.AuthFields() {
+			if r.GetString(v) == "" {
+				return fmt.Errorf("auth record needs the field %s", v)
+			}
+		}
+		if !s.AuthRecordEmailIsUnique(db, r.TableName(), r.GetString(model.FieldEmail.String())) {
+			return fmt.Errorf("record in %s collection already exists with email %s", r.TableName(), r.GetString(model.FieldEmail.String()))
+		}
+	}
+
 	err := s.DB().Transactional(func(tx *dbx.Tx) error {
 		_, err := tx.Insert(r.TableName(), r.Export()).Execute()
 		if err != nil {
@@ -114,6 +149,44 @@ func (s *BaseStore) SaveRecord(db any, r *model.Record, filters ...FilterFunc) e
 	return err
 }
 
-func (s *BaseStore) DeleteRecord(r *model.Record) error {
-	return s.DB().Model(r).Delete()
+func (s *BaseStore) DeleteRecord(db any, r *model.Record) error {
+	switch db.(type) {
+	case *dbx.Tx:
+		return db.(*dbx.Tx).Model(r).Delete()
+	case *dbx.DB:
+		return db.(*dbx.DB).Model(r).Delete()
+	default:
+		return fmt.Errorf("Type didnot fit in FindCollection!")
+	}
+}
+
+func (s *BaseStore) FindAuthRecordByEmail(db any, collectionName string, email string) (*model.Record, error) {
+	coll, err := s.FindCollectionByNameorId(db, collectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !coll.IsAuth() {
+		return nil, fmt.Errorf("Collection %s is not a auth collection.", collectionName)
+	}
+
+	var selectQuery *dbx.SelectQuery
+	switch db.(type) {
+	case *dbx.Tx:
+		selectQuery = db.(*dbx.Tx).Select().From(coll.Name)
+	case *dbx.DB:
+		selectQuery = db.(*dbx.DB).Select().From(coll.Name)
+	default:
+		return nil, fmt.Errorf("Type didnot fit in FindCollection!")
+	}
+
+	record := model.NewRecord(coll)
+	err = selectQuery.AndWhere(dbx.HashExp{
+		"Email": email,
+	}).Limit(1).One(record)
+	if err != nil {
+		return nil, err
+	}
+
+	return record, nil
 }
