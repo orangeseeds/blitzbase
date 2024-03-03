@@ -35,6 +35,11 @@ func (a *RecordAPI) index(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
+	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
+		Type:    core.IndexEvent,
+		Request: &c,
+	})
+
 	return c.JSON(200, map[string]any{
 		"records_co": records,
 	})
@@ -47,6 +52,13 @@ func (a *RecordAPI) detail(c echo.Context) error {
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
+
+	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
+		Type:    core.DetailEvent,
+		Record:  record,
+		Request: &c,
+	})
+
 	return c.JSON(200, map[string]any{
 		"record": record,
 	})
@@ -74,6 +86,12 @@ func (a *RecordAPI) save(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
+	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
+		Type:    core.CreateEvent,
+		Record:  record,
+		Request: &c,
+	})
+
 	return c.JSON(200, map[string]any{
 		"message": "saved successfully",
 		"record":  record,
@@ -87,6 +105,13 @@ func (a *RecordAPI) delete(c echo.Context) error {
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
+
+	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
+		Type:    core.DetailEvent,
+		Record:  record,
+		Request: &c,
+	})
+
 	return c.JSON(200, map[string]any{
 		"message": "deleted successfully",
 	})

@@ -31,6 +31,11 @@ func (a *CollectionAPI) index(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
+	a.app.OnCollectionIndex().Trigger(&core.CollectionEvent{
+		Type:    core.CreateEvent,
+		Request: &c,
+	})
+
 	return c.JSON(200, col)
 }
 
@@ -40,6 +45,13 @@ func (a *CollectionAPI) detail(c echo.Context) error {
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
+
+	a.app.OnCollectionDetail().Trigger(&core.CollectionEvent{
+		Type:       core.DetailEvent,
+		Collection: col,
+		Request:    &c,
+	})
+
 	return c.JSON(200, map[string]any{
 		"collection": col,
 	})
@@ -79,6 +91,12 @@ func (a *CollectionAPI) save(c echo.Context) error {
 		}
 	}
 
+	a.app.OnCollectionDetail().Trigger(&core.CollectionEvent{
+		Type:       core.CreateEvent,
+		Collection: &col,
+		Request:    &c,
+	})
+
 	return c.JSON(200, map[string]any{
 		"message":    "saved successfully",
 		"collection": col,
@@ -92,6 +110,13 @@ func (a *CollectionAPI) delete(c echo.Context) error {
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
+
+	a.app.OnCollectionDelete().Trigger(&core.CollectionEvent{
+		Type:       core.DeleteEvent,
+		Collection: &col,
+		Request:    &c,
+	})
+
 	return c.JSON(200, map[string]any{
 		"message":    "deleted successfully",
 		"collection": col,

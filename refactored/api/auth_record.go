@@ -63,6 +63,13 @@ func (a *AuthRecordAPI) authWithPassword(c echo.Context) error {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, authClaims)
 	// encode token using secret
 	encoded, err := jwtToken.SignedString([]byte("secret"))
+
+	a.app.OnRecordAuth().Trigger(&core.RecordEvent{
+		Type:    core.AuthEvent,
+		Record:  record,
+		Request: &c,
+	})
+
 	return c.JSON(200, map[string]any{
 		"message": "auth with password success",
 		"token":   encoded,
@@ -131,11 +138,17 @@ func (a *AuthRecordAPI) confirmResetPassword(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
+	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
+		Type:    core.UpdateEvent,
+		Record:  record,
+		Request: &c,
+	})
+
 	return c.JSON(200, map[string]any{
 		"message": "password updated successfully!",
 	})
 }
 
-func (a *AuthRecordAPI) requestVerification(c echo.Context) error { return nil }
-
-func (a *AuthRecordAPI) confirmRequestVeritication(c echo.Context) error { return nil }
+// func (a *AuthRecordAPI) requestVerification(c echo.Context) error { return nil }
+//
+// func (a *AuthRecordAPI) confirmRequestVeritication(c echo.Context) error { return nil }
