@@ -83,7 +83,6 @@ func (s *BaseStore) FindRecordById(db any, id string, colName string, filters ..
 
 	resp := dbx.NullStringMap{}
 	err = q.One(&resp)
-	// log.Println(q.Build().SQL(), id, colName)
 	if err != nil {
 		log.Println("record not found")
 		return nil, err
@@ -109,7 +108,6 @@ func (s *BaseStore) AuthRecordEmailIsUnique(db any, collection string, email str
 		Where(dbx.HashExp{model.FieldEmail.String(): email}).
 		Limit(1)
 
-    log.Println(query.Build().SQL())
 	var exists bool
 
 	return query.Row(&exists) == nil && !exists
@@ -181,12 +179,20 @@ func (s *BaseStore) FindAuthRecordByEmail(db any, collectionName string, email s
 	}
 
 	record := model.NewRecord(coll)
-	err = selectQuery.AndWhere(dbx.HashExp{
+	q := selectQuery.AndWhere(dbx.HashExp{
 		"Email": email,
-	}).Limit(1).One(record)
+	}).Limit(1)
 	if err != nil {
 		return nil, err
 	}
+
+	resp := dbx.NullStringMap{}
+	err = q.One(&resp)
+	if err != nil {
+		log.Println("record not found")
+		return nil, err
+	}
+	record.LoadNullStringMap(resp)
 
 	return record, nil
 }

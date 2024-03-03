@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -45,7 +46,7 @@ func (a *AuthRecordAPI) authWithPassword(c echo.Context) error {
 	if err != nil {
 		return c.JSON(400, err.Error())
 	}
-
+	log.Println(record)
 	valid := record.ValidatePassword(authReq.Password)
 	if !valid {
 		return c.JSON(400, "Password didnot match!")

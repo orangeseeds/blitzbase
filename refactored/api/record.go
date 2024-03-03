@@ -63,7 +63,10 @@ func (a *RecordAPI) save(c echo.Context) error {
 	}
 
 	if col.IsAuth() {
-		record.SetPassword(record.GetString(model.FieldPassword.String()))
+		err := record.SetPassword(record.GetString(model.FieldPassword.String()))
+		if err != nil {
+			return err
+		}
 	}
 
 	err = a.app.Store().SaveRecord(a.app.Store().DB(), record)
