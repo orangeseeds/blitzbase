@@ -35,7 +35,7 @@ func TestCollection(t *testing.T) {
 	}
 
 	filter := func(q *dbx.SelectQuery) error {
-		expr, err := FilterRule(collection.Rule).BuildExpr(&fieldSpec)
+		expr, err := FilterRule(collection.IndexRule).BuildExpr(&fieldSpec)
 		if err != nil {
 			return err
 		}
@@ -74,7 +74,7 @@ func TestCollectionSave(t *testing.T) {
 	}
 
 	createFilter := func(q *dbx.SelectQuery) error {
-		expr, err := FilterRule(collection.Rule).BuildExpr(&fieldSpec)
+		expr, err := FilterRule(collection.IndexRule).BuildExpr(&fieldSpec)
 		if err != nil {
 			return err
 		}

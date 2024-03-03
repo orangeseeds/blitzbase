@@ -26,7 +26,7 @@ const (
 	FieldEmail    = "Email"
 	FieldToken    = "Token"
 	FieldPassword = "Password"
-	FieldRule     = "Rule"
+	// FieldRule     = "Rule"
 
 	FieldIndexRule  = "IndexRule"
 	FieldDetailRule = "DetailRule"
@@ -44,8 +44,8 @@ func AuthRecordFields() []string {
 		FieldEmail,
 		FieldToken,
 		FieldPassword,
-		FieldCreatedAt,
-		FieldUpdatedAt,
+		// FieldCreatedAt,
+		// FieldUpdatedAt,
 	}
 }
 

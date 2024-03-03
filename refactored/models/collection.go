@@ -19,7 +19,7 @@ type Collection struct {
 	Name       string         `db:"Name"`
 	Type       CollectionType `db:"Type"` // base,auth
 	Schema     Schema         `db:"Schema"`
-	Rule       string         `db:"Rule"` // for now all rules, this needs to later be expanded to fit list, view, update, create and delete
+	// Rule       string         `db:"Rule"` // for now all rules, this needs to later be expanded to fit list, view, update, create and delete
 	IndexRule  string         `db:"IndexRule"`
 	DetailRule string         `db:"DetailRule"`
 	CreateRule string         `db:"CreateRule"`
@@ -70,7 +70,7 @@ func (c *Collection) MetaDataDefn() map[string]string {
 		"Name":   FieldTypeText,
 		"Type":   FieldTypeText,
 		"Schema": FieldTypeJson,
-		"Rule":   FieldTypeText,
+		// "Rule":   FieldTypeText,
 
 		"CreateRule": FieldTypeText,
 		"UpdateRule": FieldTypeText,

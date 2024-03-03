@@ -24,10 +24,11 @@ func main() {
 	store.CreateAdminTable()
 	store.CreateCollectionMetaTable()
 
-	col := model.NewCollection("id", "test_collection", model.BASE)
+	col := model.NewCollection(utils.RandStr(10), "test_collection", model.BASE)
 	col.Schema.AddField(&model.Field{"1", "FieldName", model.FieldTypeText, nil})
 	col.Schema.AddField(&model.Field{"2", "FieldName2", model.FieldTypeText, nil})
 
+	store.SaveCollection(store.DB(), col)
 	store.CreateCollectionTable(col)
 
 	admin := model.Admin{

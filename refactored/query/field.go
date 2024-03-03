@@ -19,7 +19,7 @@ func (r *RecordFieldSpecifier) Parse() *dbx.Expression {
 	// $request.auth
 	// $request.method
 	// $request.data
-	parse(r.Collection.Rule)
+	parse(r.Collection.IndexRule)
 	return nil
 
 }

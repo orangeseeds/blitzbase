@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
@@ -50,8 +51,12 @@ func (r *Record) Collection() *Collection {
 
 func (r *Record) Set(key string, val any) {
 	switch key {
-	case string(FieldId):
+	case FieldId:
 		r.SetID(cast.ToString(val))
+	case FieldCreatedAt:
+		r.CreatedAt = cast.ToString(val)
+	case FieldUpdatedAt:
+		r.UpdatedAt = cast.ToString(val)
 	default:
 		if r.Collection().Schema.HasField(key) {
 			r.data[key] = val
@@ -69,7 +74,7 @@ func (r *Record) Get(key string) any {
 			if !ok {
 				return nil
 			}
-            // log.Println(v)
+			// log.Println(v)
 			return v
 		}
 		return nil
@@ -81,7 +86,11 @@ func (r *Record) Export() map[string]any {
 	if r.data != nil {
 		toExport = r.data
 	}
-	toExport[string(FieldId)] = r.Id
+
+	log.Println(r)
+	toExport[FieldId] = r.Id
+	toExport[FieldCreatedAt] = r.CreatedAt
+	toExport[FieldUpdatedAt] = r.UpdatedAt
 	return toExport
 }
 

@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"log"
+	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	model "github.com/orangeseeds/blitzbase/refactored/models"
@@ -131,6 +132,8 @@ func (s *BaseStore) SaveRecord(db any, r *model.Record, filters ...FilterFunc) e
 	}
 
 	err := s.DB().Transactional(func(tx *dbx.Tx) error {
+		r.CreatedAt = time.Now().String()
+		r.UpdatedAt = time.Now().String()
 		_, err := tx.Insert(r.TableName(), r.Export()).Execute()
 		if err != nil {
 			return err

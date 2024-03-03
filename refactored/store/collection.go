@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	model "github.com/orangeseeds/blitzbase/refactored/models"
@@ -49,15 +50,19 @@ func (s *BaseStore) SaveCollection(db any, col *model.Collection) error {
 		col.SetName(col.Name)
 
 		params := dbx.Params{
-			"Id":         col.GetID(),
-			"Name":       col.GetName(),
-			"Type":       col.Type,
-			"Schema":     string(json),
-			"Rule":       col.Rule,
+			"Id":     col.GetID(),
+			"Name":   col.GetName(),
+			"Type":   col.Type,
+			"Schema": string(json),
+			// "Rule":       col.Rule,
 			"IndexRule":  col.IndexRule,
 			"CreateRule": col.CreateRule,
+			"DetailRule": col.DetailRule,
 			"UpdateRule": col.UpdateRule,
 			"DeleteRule": col.DeleteRule,
+
+			"CreatedAt": time.Now().String(),
+			"UpdatedAt": time.Now().String(),
 		}
 
 		switch db.(type) {
