@@ -46,28 +46,28 @@ func (s *BaseStore) SaveCollection(db any, col *model.Collection) error {
 		if err != nil {
 			return err
 		}
-        col.SetName(col.Name)
+		col.SetName(col.Name)
+
+		params := dbx.Params{
+			"Id":         col.GetID(),
+			"Name":       col.GetName(),
+			"Type":       col.Type,
+			"Schema":     string(json),
+			"Rule":       col.Rule,
+			"IndexRule":  col.IndexRule,
+			"CreateRule": col.CreateRule,
+			"UpdateRule": col.UpdateRule,
+			"DeleteRule": col.DeleteRule,
+		}
 
 		switch db.(type) {
 		case *dbx.Tx:
-			_, err = db.(*dbx.Tx).Insert(col.TableName(), dbx.Params{
-				"Id":     col.GetID(),
-				"Name":   col.GetName(),
-				"Type":   col.Type,
-				"Schema": string(json),
-				"Rule":   col.Rule,
-			}).Execute()
+			_, err = db.(*dbx.Tx).Insert(col.TableName(), params).Execute()
 			if err != nil {
 				return err
 			}
 		case *dbx.DB:
-			_, err = db.(*dbx.DB).Insert(col.TableName(), dbx.Params{
-				"Id":     col.GetID(),
-				"Name":   col.GetName(),
-				"Type":   col.Type,
-				"Schema": string(json),
-				"Rule":   col.Rule,
-			}).Execute()
+			_, err = db.(*dbx.DB).Insert(col.TableName(), params).Execute()
 			if err != nil {
 				return err
 			}

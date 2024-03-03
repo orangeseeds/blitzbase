@@ -2,11 +2,13 @@ package main
 
 import (
 	"log"
+	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
-	model "github.com/orangeseeds/blitzbase/refactored/models"
 	_ "github.com/mattn/go-sqlite3"
+	model "github.com/orangeseeds/blitzbase/refactored/models"
 	"github.com/orangeseeds/blitzbase/refactored/store"
+	"github.com/orangeseeds/blitzbase/utils"
 )
 
 func main() {
@@ -23,8 +25,23 @@ func main() {
 	store.CreateCollectionMetaTable()
 
 	col := model.NewCollection("id", "test_collection", model.BASE)
-	col.Schema.AddField(&model.Field{"1", "FieldName", model.Text, nil})
-	col.Schema.AddField(&model.Field{"2", "FieldName2", model.Text, nil})
+	col.Schema.AddField(&model.Field{"1", "FieldName", model.FieldTypeText, nil})
+	col.Schema.AddField(&model.Field{"2", "FieldName2", model.FieldTypeText, nil})
 
 	store.CreateCollectionTable(col)
+
+	admin := model.Admin{
+		BaseModel: model.BaseModel{
+			Id:        utils.RandStr(10),
+			CreatedAt: time.Now().String(),
+			UpdatedAt: time.Now().String(),
+		},
+		Email: "admin@mail.com",
+	}
+	admin.SetPassword("1234567890")
+	admin.RefreshToken()
+	err = db.Model(&admin).Insert()
+	if err != nil {
+		log.Println(err)
+	}
 }

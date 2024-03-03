@@ -8,39 +8,53 @@ import (
 	"github.com/orangeseeds/blitzbase/utils"
 )
 
-type FieldType string
-
-func (f FieldType) String() string {
-	return string(f)
-}
-
 const (
-	Text     FieldType = "text"
-	Number   FieldType = "number"
-	Bool     FieldType = "bool"
-	Date     FieldType = "date"
-	Json     FieldType = "json"
-	File     FieldType = "file"
-	Relation FieldType = "relation"
+	FieldTypeText     = "text"
+	FieldTypeNumber   = "number"
+	FieldTypeBool     = "bool"
+	FieldTypeDate     = "date"
+	FieldTypeJson     = "json"
+	FieldTypeFile     = "file"
+	FieldTypeRelation = "relation"
 )
 
 type FieldName string
 
 // basic fields
 const (
-	FieldId       FieldName = "Id"
-	FieldEmail    FieldName = "Email"
-	FieldToken    FieldName = "Token"
-	FieldRule     FieldName = "Rule"
-	FieldPassword FieldName = "Password"
+	FieldId       = "Id"
+	FieldEmail    = "Email"
+	FieldToken    = "Token"
+	FieldPassword = "Password"
+	FieldRule     = "Rule"
+
+	FieldIndexRule  = "IndexRule"
+	FieldDetailRule = "DetailRule"
+	FieldUpdateRule = "UpdateRule"
+	FieldCreateRule = "CreateRule"
+	FieldDeleteRule = "DeleteRule"
+
+	FieldCreatedAt = "CreatedAt"
+	FieldUpdatedAt = "UpdatedAt"
 )
 
-func AuthFields() []string {
+func AuthRecordFields() []string {
 	return []string{
-		FieldPassword.String(),
-		FieldEmail.String(),
-		FieldToken.String(),
-		FieldPassword.String(),
+		FieldPassword,
+		FieldEmail,
+		FieldToken,
+		FieldPassword,
+		FieldCreatedAt,
+		FieldUpdatedAt,
+	}
+}
+
+// contains Id,CreatedAt,UpdatedAt
+func BaseFields() []string {
+	return []string{
+		FieldId,
+		FieldCreatedAt,
+		FieldUpdatedAt,
 	}
 }
 
@@ -55,7 +69,7 @@ type FieldOption interface {
 type Field struct {
 	Id   string
 	Name string
-	Type FieldType
+	Type string
 
 	// js code string
 	Options FieldOption

@@ -21,15 +21,15 @@ func LoadAdminAPI(app core.App, e *echo.Echo) {
 	api := AdminAPI{app: app}
 	grp := e.Group("/admins")
 
-	grp.GET("", api.index, LoadJWT(), NeedsAdminAuth())
-	grp.GET("/:id", api.detail, LoadJWT(), NeedsAdminAuth())
+	grp.GET("", api.index, LoadJWT(), NeedsAdminAuth(app))
+	grp.GET("/:id", api.detail, LoadJWT(), NeedsAdminAuth(app))
 
 	grp.POST("/auth-with-password", api.authWithPassword)
 	grp.POST("/reset-password", api.resetPassword)
 	grp.POST("/confirm-reset-password", api.confirmResetPassword)
 
-	grp.POST("", api.save, LoadJWT(), NeedsAdminAuth())
-	grp.DELETE("/:collection", api.delete, LoadJWT(), NeedsAdminAuth())
+	grp.POST("", api.save, LoadJWT(), NeedsAdminAuth(app))
+	grp.DELETE("/:collection", api.delete, LoadJWT(), NeedsAdminAuth(app))
 }
 
 type AdminAPI struct {
@@ -165,10 +165,6 @@ func (a *AdminAPI) confirmResetPassword(c echo.Context) error {
 		Password        string `json:"password" validate:"required"`
 		ConfirmPassword string `json:"confirm_password" validate:"required"`
 	}
-	if confirmReq.Password != confirmReq.ConfirmPassword {
-		return c.JSON(400, fmt.Errorf("password and confirm_password not equal."))
-	}
-
 	err := c.Bind(&confirmReq)
 	if err != nil {
 		return c.JSON(400, err.Error())
@@ -176,6 +172,10 @@ func (a *AdminAPI) confirmResetPassword(c echo.Context) error {
 	err = c.Validate(confirmReq)
 	if err != nil {
 		return c.JSON(400, err.Error())
+	}
+
+	if confirmReq.Password != confirmReq.ConfirmPassword {
+		return c.JSON(400, fmt.Errorf("password and confirm_password not equal."))
 	}
 
 	admin, err := a.app.Store().FindAdminByToken(a.app.Store().DB(), confirmReq.Token)

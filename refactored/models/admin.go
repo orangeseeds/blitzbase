@@ -10,11 +10,11 @@ import (
 type Admin struct {
 	BaseModel
 
-    Email    string `db:"Email"`
-    Token    string`db:"Token"`
-    Password string `db:"Password"`// hash
+	Email    string `db:"Email"`
+	Token    string `db:"Token"`
+	Password string `db:"Password"` // hash
 
-    Rule string `db:"Rule"`// for now all rules
+	// Rule string `db:"Rule"` // for now all rules
 }
 
 func (a *Admin) TableName() string {
@@ -56,11 +56,19 @@ func (a *Admin) RefreshToken() {
 
 // Provides an export to build the _admin_users table
 func (a *Admin) ExportForTable() map[string]string {
-	return map[string]string{
-		"Id":       string(Text),
-		"Email":    string(Text),
-		"Token":    string(Text),
-		"Password": string(Text),
-		"Rule":     string(Text),
+	schema := map[string]string{
+		"Email":    FieldTypeText,
+		"Token":    FieldTypeText,
+		"Password": FieldTypeText,
 	}
+	for _, v := range BaseFields() {
+		if v == FieldId {
+			schema[v] = FieldTypeText + " primary key"
+		} else {
+
+			schema[v] = FieldTypeText
+		}
+
+	}
+	return schema
 }

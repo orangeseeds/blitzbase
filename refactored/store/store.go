@@ -28,11 +28,13 @@ type Store interface {
 	DeleteAdmin(any, *model.Admin) error
 
 	AuthRecordEmailIsUnique(any, string, string) bool
+	FindAuthRecordByToken(any, string, string) (*model.Record, error)
 	FindAuthRecordByEmail(any, string, string) (*model.Record, error)
 	FindRecordsAll(any, string, ...FilterFunc) ([]*model.Record, error)
 	FindRecordById(any, string, string, ...FilterFunc) (*model.Record, error)
 	// FindRecordsByExpr(...dbx.Expression) ([]*model.Record, error)
 	SaveRecord(any, *model.Record, ...FilterFunc) error
+	UpdateRecord(any, string, *model.Record, ...FilterFunc) error
 	DeleteRecord(any, *model.Record) error
 
 	// ExpandRecord()

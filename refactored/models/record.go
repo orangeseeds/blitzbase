@@ -102,7 +102,7 @@ func (r *Record) UnmarshalJSON(data []byte) error {
 
 func (a *Record) ValidatePassword(password string) bool {
 	bytePassword := []byte(password)
-	bytePasswordHash := []byte(a.GetString(FieldPassword.String()))
+	bytePasswordHash := []byte(a.GetString(FieldPassword))
 
 	// comparing the password with the hash
 	err := bcrypt.CompareHashAndPassword(bytePasswordHash, bytePassword)
@@ -123,7 +123,7 @@ func (a *Record) SetPassword(password string) error {
 		return err
 	}
 
-	a.Set(FieldPassword.String(), string(hashedPassword))
+	a.Set(FieldPassword, string(hashedPassword))
 
 	a.RefreshToken()
 	return nil

@@ -10,7 +10,7 @@ func TestRecordLoad(t *testing.T) {
 	recordId := utils.RandStr(10)
 	collectionId := utils.RandStr(10)
 	col := NewCollection(collectionId, "test_collection", BASE)
-	col.Schema.AddField(&Field{recordId, "field_1", Number, nil})
+	col.Schema.AddField(&Field{recordId, "field_1", FieldTypeNumber, nil})
 
 	rec := NewRecord(col)
 	rec.Load(map[string]any{

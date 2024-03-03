@@ -16,10 +16,15 @@ const (
 type Collection struct {
 	BaseModel
 
-	Name   string         `db:"Name"`
-	Type   CollectionType `db:"Type"` // base,auth
-	Schema Schema         `db:"Schema"`
-	Rule   string         `db:"Rule"` // for now all rules, this needs to later be expanded to fit list, view, update, create and delete
+	Name       string         `db:"Name"`
+	Type       CollectionType `db:"Type"` // base,auth
+	Schema     Schema         `db:"Schema"`
+	Rule       string         `db:"Rule"` // for now all rules, this needs to later be expanded to fit list, view, update, create and delete
+	IndexRule  string         `db:"IndexRule"`
+	DetailRule string         `db:"DetailRule"`
+	CreateRule string         `db:"CreateRule"`
+	UpdateRule string         `db:"UpdateRule"`
+	DeleteRule string         `db:"DeleteRule"`
 }
 
 func NewCollection(id string, name string, colType CollectionType) *Collection {
@@ -50,7 +55,9 @@ func (c *Collection) IsAuth() bool {
 // Provides an key,val pair of col name and datatype to build a new collection table
 func (c *Collection) DataDefn() map[string]string {
 	toExport := make(map[string]string)
-	toExport["Id"] = string(Text)
+	toExport[FieldId] = FieldTypeText+ " primary key"
+	toExport[FieldCreatedAt] = FieldTypeText
+	toExport[FieldUpdatedAt] = FieldTypeText
 	for _, f := range c.Schema.GetFields() {
 		toExport[f.Name] = string(f.Type)
 	}
@@ -59,11 +66,20 @@ func (c *Collection) DataDefn() map[string]string {
 
 func (c *Collection) MetaDataDefn() map[string]string {
 	return map[string]string{
-		"Id":     string(Text) + " primary key",
-		"Name":   string(Text),
-		"Type":   string(Text),
-		"Schema": string(Json),
-		"Rule":   string(Text),
+		"Id":     FieldTypeText + " primary key",
+		"Name":   FieldTypeText,
+		"Type":   FieldTypeText,
+		"Schema": FieldTypeJson,
+		"Rule":   FieldTypeText,
+
+		"CreateRule": FieldTypeText,
+		"UpdateRule": FieldTypeText,
+		"IndexRule":  FieldTypeText,
+		"DetailRule": FieldTypeText,
+		"DeleteRule": FieldTypeText,
+
+		"CreatedAt": FieldTypeText,
+		"UpdatedAt": FieldTypeText,
 	}
 }
 

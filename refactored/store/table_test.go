@@ -52,13 +52,13 @@ func TestCreateCollectionTable(t *testing.T) {
 	col.Schema.AddField(&model.Field{
 		Id:      utils.RandStr(10),
 		Name:    "field_one",
-		Type:    model.Text,
+		Type:    model.FieldTypeText,
 		Options: nil,
 	})
 	col.Schema.AddField(&model.Field{
 		Id:      utils.RandStr(10),
 		Name:    "field_two",
-		Type:    model.Number,
+		Type:    model.FieldTypeNumber,
 		Options: nil,
 	})
 

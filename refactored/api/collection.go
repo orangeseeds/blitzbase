@@ -11,7 +11,7 @@ import (
 func LoadCollectionAPI(app core.App, e *echo.Echo) {
 	api := CollectionAPI{app: app}
 
-	grp := e.Group("/collections", LoadJWT(), NeedsAdminAuth())
+	grp := e.Group("/collections", LoadJWT(), NeedsAdminAuth(app))
 
 	grp.GET("", api.index)
 	grp.GET("/:collection", api.detail)
@@ -54,13 +54,13 @@ func (a *CollectionAPI) save(c echo.Context) error {
 	}
 
 	if col.IsAuth() {
-		for _, v := range model.AuthFields() {
+		for _, v := range model.AuthRecordFields() {
 
 			if !col.Schema.HasField(v) {
 				f := model.Field{
 					Id:      utils.RandStr(10),
 					Name:    v,
-					Type:    model.Text,
+					Type:    model.FieldTypeText,
 					Options: nil,
 				}
 				col.Schema.AddField(&f)

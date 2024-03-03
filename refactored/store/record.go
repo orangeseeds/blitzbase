@@ -105,7 +105,7 @@ func (s *BaseStore) AuthRecordEmailIsUnique(db any, collection string, email str
 		return false
 	}
 	query := selectQuery.From(collection).
-		Where(dbx.HashExp{model.FieldEmail.String(): email}).
+		Where(dbx.HashExp{model.FieldEmail: email}).
 		Limit(1)
 
 	var exists bool
@@ -120,13 +120,13 @@ func (s *BaseStore) SaveRecord(db any, r *model.Record, filters ...FilterFunc) e
 	// if you can view the record save, else rollback the transaction
 
 	if r.Collection().IsAuth() {
-		for _, v := range model.AuthFields() {
+		for _, v := range model.AuthRecordFields() {
 			if r.GetString(v) == "" {
 				return fmt.Errorf("auth record needs the field %s", v)
 			}
 		}
-		if !s.AuthRecordEmailIsUnique(db, r.TableName(), r.GetString(model.FieldEmail.String())) {
-			return fmt.Errorf("record in %s collection already exists with email %s", r.TableName(), r.GetString(model.FieldEmail.String()))
+		if !s.AuthRecordEmailIsUnique(db, r.TableName(), r.GetString(model.FieldEmail)) {
+			return fmt.Errorf("record in %s collection already exists with email %s", r.TableName(), r.GetString(model.FieldEmail))
 		}
 	}
 
@@ -180,7 +180,7 @@ func (s *BaseStore) FindAuthRecordByEmail(db any, collectionName string, email s
 
 	record := model.NewRecord(coll)
 	q := selectQuery.AndWhere(dbx.HashExp{
-		"Email": email,
+		model.FieldEmail: email,
 	}).Limit(1)
 	if err != nil {
 		return nil, err
@@ -195,4 +195,75 @@ func (s *BaseStore) FindAuthRecordByEmail(db any, collectionName string, email s
 	record.LoadNullStringMap(resp)
 
 	return record, nil
+}
+
+func (s *BaseStore) FindAuthRecordByToken(db any, collectionName string, token string) (*model.Record, error) {
+	coll, err := s.FindCollectionByNameorId(db, collectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !coll.IsAuth() {
+		return nil, fmt.Errorf("Collection %s is not a auth collection.", collectionName)
+	}
+
+	var selectQuery *dbx.SelectQuery
+	switch db.(type) {
+	case *dbx.Tx:
+		selectQuery = db.(*dbx.Tx).Select().From(coll.Name)
+	case *dbx.DB:
+		selectQuery = db.(*dbx.DB).Select().From(coll.Name)
+	default:
+		return nil, fmt.Errorf("Type didnot fit in FindCollection!")
+	}
+
+	record := model.NewRecord(coll)
+	q := selectQuery.AndWhere(dbx.HashExp{
+		model.FieldToken: token,
+	}).Limit(1)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := dbx.NullStringMap{}
+	err = q.One(&resp)
+	if err != nil {
+		log.Println("record not found")
+		return nil, err
+	}
+	record.LoadNullStringMap(resp)
+
+	return record, nil
+}
+
+// Make sure to get the collection from the table before sending the record
+func (s *BaseStore) UpdateRecord(db any, collection string, r *model.Record, filters ...FilterFunc) error {
+	// do a dry run to save the record
+	// check whether you can view the record or not
+	// if you can view the record save, else rollback the transaction
+
+	col, err := s.FindCollectionByNameorId(db, collection)
+	if err != nil {
+		return err
+	}
+	params := dbx.Params{}
+	for _, f := range col.Schema.GetFields() {
+		params[f.Name] = r.Get(f.Name)
+	}
+
+	switch db.(type) {
+	case *dbx.Tx:
+		_, err := db.(*dbx.Tx).Update(col.Name, params, dbx.HashExp{
+			model.FieldId: r.GetID(),
+		}).Execute()
+		return err
+	case *dbx.DB:
+		res, err := db.(*dbx.DB).Update(col.Name, params, dbx.HashExp{
+			model.FieldId: r.GetID(),
+		}).Execute()
+		log.Println(res, err)
+		return err
+	default:
+		return fmt.Errorf("Type didnot fit in FindCollection!")
+	}
 }

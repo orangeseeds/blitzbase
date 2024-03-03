@@ -5,8 +5,8 @@ import "testing"
 func TestSchemaMarshal(t *testing.T) {
 	schema := Schema{
 		Fields: []*Field{
-			{"1", "Name", Text, nil},
-			{"2", "Addr", Number, nil},
+			{"1", "Name", FieldTypeText, nil},
+			{"2", "Addr", FieldTypeNumber, nil},
 		},
 	}
 	expected := `[{"Id":"1","Name":"Name","Type":"text","Options":null},{"Id":"2","Name":"Addr","Type":"number","Options":null}]`

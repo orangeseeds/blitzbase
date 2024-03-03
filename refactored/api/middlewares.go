@@ -19,7 +19,7 @@ func LoadJWT() echo.MiddlewareFunc {
 	return echojwt.WithConfig(requireJWTAdminAuth)
 }
 
-func NeedsAdminAuth() echo.MiddlewareFunc {
+func NeedsAdminAuth(app core.App) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			token, ok := c.Get("user").(*jwt.Token)
@@ -30,6 +30,13 @@ func NeedsAdminAuth() echo.MiddlewareFunc {
 
 			if authClaims.Type != utils.JWTAdmin {
 				return c.JSON(400, "jwt type is not admin")
+			}
+
+			_, err := app.Store().FindAdminById(app.Store().DB(), authClaims.Id)
+			if err != nil {
+				return c.JSON(500, map[string]any{
+					"message": "invalid jwt token",
+				})
 			}
 			return next(c)
 		}
