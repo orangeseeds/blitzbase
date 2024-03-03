@@ -1,4 +1,4 @@
-package store
+package pubsub
 
 import (
 	"fmt"
@@ -52,18 +52,18 @@ func (p *Publisher) SubCount() int {
 }
 
 // here topic means collection
-func (p *Publisher) Dispatch(e DBHookEvent) {
+func (p *Publisher) Dispatch(e struct{}) {
 	// log.Println(e)
-	for _, sub := range p.subs {
+	// for _, sub := range p.subs {
 
-		if !sub.HasTopic(e.Message.Record.Collection) || !p.IsAllowed(sub) {
-			continue
-		}
-		go func(s *Subscriber, e DBHookEvent) {
-			s.Notify(&e)
-
-		}(sub, e)
-	}
+	// 	if !sub.HasTopic(e.Message.Record.Collection) || !p.IsAllowed(sub) {
+	// 		continue
+	// 	}
+	// 	go func(s *Subscriber, e DBHookEvent) {
+	// 		s.Notify(&e)
+	//
+	// 	}(sub, e)
+	// }
 }
 
 func (p *Publisher) IsAllowed(s *Subscriber) bool {

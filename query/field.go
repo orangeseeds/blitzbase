@@ -3,7 +3,7 @@ package query
 import (
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/labstack/echo"
-	model "github.com/orangeseeds/blitzbase/refactored/models"
+	model "github.com/orangeseeds/blitzbase/models"
 )
 
 type RecordFieldSpecifier struct {

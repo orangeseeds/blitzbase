@@ -8,36 +8,34 @@ import (
 	"strings"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
+	model "github.com/orangeseeds/blitzbase/models"
 	"github.com/orangeseeds/blitzbase/store"
 )
 
-func CreateNewTable(store *store.Storage, c store.Collection) error {
-	q := store.DB.CreateTable(c.TableName(), c.TableSchema())
+func CreateNewTable(store store.Store, c model.Collection) error {
+	q := store.DB().CreateTable(c.TableName(), c.DataDefn())
 	if _, err := q.Execute(); err != nil {
 		return err
 	}
 
+	migrationPath := "./"
+
 	upSQL := fmt.Sprintf("%s;", q.SQL())
 	downSQL := fmt.Sprintf(`DROP TABLE IF EXISTS %s;`, c.TableName())
-	if err := CreateNewMigration(upSQL, downSQL, store.MigrationsPath); err != nil {
+	if err := CreateNewMigration(upSQL, downSQL, migrationPath); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func AddCollectionRecord(s *store.Storage, c store.Collection) error {
+func AddCollectionRecord(s store.Store, c model.Collection) error {
 
-	cType := store.BaseType
-	if c.IsAuth() {
-		cType = store.AuthType
-	}
+	schemaJson, _ := json.Marshal(c.DataDefn())
 
-	schemaJson, _ := json.Marshal(c.RawSchema())
-
-	q := s.DB.Insert("_collections", dbx.Params{
+	q := s.DB().Insert(c.TableName(), dbx.Params{
 		"name":   c.TableName(),
-		"type":   cType,
+		"type":   c.Type,
 		"schema": schemaJson,
 	})
 

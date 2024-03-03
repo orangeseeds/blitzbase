@@ -6,8 +6,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"github.com/orangeseeds/blitzbase/refactored/core"
-	model "github.com/orangeseeds/blitzbase/refactored/models"
+	"github.com/orangeseeds/blitzbase/core"
+	model "github.com/orangeseeds/blitzbase/models"
 	"github.com/orangeseeds/blitzbase/utils"
 )
 

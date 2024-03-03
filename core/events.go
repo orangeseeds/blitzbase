@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/labstack/echo/v4"
-	model "github.com/orangeseeds/blitzbase/refactored/models"
+	model "github.com/orangeseeds/blitzbase/models"
 )
 
 const (

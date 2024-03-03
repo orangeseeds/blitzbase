@@ -1,4 +1,4 @@
-package store
+package pubsub
 
 import (
 	"crypto/rand"
@@ -16,7 +16,7 @@ type TopicInfo struct {
 type Subscriber struct {
 	id     string
 	buffer int // size of messages channel
-	events chan DBHookEvent
+	events chan struct{}
 	topics map[string]struct{}
 	active bool
 	mut    sync.RWMutex
@@ -35,7 +35,7 @@ func NewSubscriber(buffer int) *Subscriber {
 	return &Subscriber{
 		id:     genRandomID(),
 		buffer: buffer,
-		events: make(chan DBHookEvent, buffer),
+		events: make(chan struct{}, buffer),
 		topics: make(map[string]struct{}),
 		active: true,
 	}
@@ -102,7 +102,7 @@ func (s *Subscriber) IsActive() bool {
 	return s.active
 }
 
-func (s *Subscriber) Notify(m *DBHookEvent) {
+func (s *Subscriber) Notify(m *struct{}) {
 	s.mut.Lock()
 	defer s.mut.Unlock()
 	// log.Println(*m)
@@ -111,7 +111,7 @@ func (s *Subscriber) Notify(m *DBHookEvent) {
 	}
 }
 
-func (s *Subscriber) Listen() chan DBHookEvent {
+func (s *Subscriber) Listen() chan struct{} {
 	s.mut.RLock()
 	defer s.mut.RUnlock()
 	return s.events

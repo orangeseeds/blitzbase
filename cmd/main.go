@@ -1,32 +1,39 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"log"
 
+	dbx "github.com/go-ozzo/ozzo-dbx"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/orangeseeds/blitzbase/api"
 	"github.com/orangeseeds/blitzbase/core"
 	"github.com/orangeseeds/blitzbase/store"
-	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "blitzbase",
-	Short: "Blitzbase is a realtime database.",
-}
-
 func main() {
-
-	dbPath := "./test.db"
-	migsPath := "./migrations"
-	store := store.NewStorage(dbPath, migsPath)
-	app := core.NewApp(store)
-
-	rootCmd.AddCommand(NewMigrateCommand(app))
-	rootCmd.AddCommand(NewAdminCommand(app))
-	rootCmd.AddCommand(NewServerCommand(app))
-	err := rootCmd.Execute()
+	dbPath := "data.db"
+	db, err := dbx.Open("sqlite3", dbPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
+	defer db.Close()
+	store := store.NewBaseStore(db)
+
+	store.CreateAdminTable()
+	store.CreateCollectionMetaTable()
+
+	app := core.NewDBApp(core.DBAppConfig{
+		DbPath:     dbPath,
+		ServerAddr: ":9900",
+	}, store)
+
+	go func() {
+		app.OnAdminAuth().Add(func(e *core.AdminEvent) error {
+			log.Println("Admin logged in", e.Admin)
+			return nil
+		})
+	}()
+
+	e := api.SetupServer(app)
+	e.Start(app.Addr())
 }

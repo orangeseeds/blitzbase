@@ -6,8 +6,8 @@ import (
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	_ "github.com/mattn/go-sqlite3"
-	model "github.com/orangeseeds/blitzbase/refactored/models"
-	"github.com/orangeseeds/blitzbase/refactored/store"
+	model "github.com/orangeseeds/blitzbase/models"
+	"github.com/orangeseeds/blitzbase/store"
 	"github.com/orangeseeds/blitzbase/utils"
 )
 

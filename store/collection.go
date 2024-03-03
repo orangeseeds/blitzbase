@@ -2,105 +2,94 @@ package store
 
 import (
 	"fmt"
-	"strings"
+	"time"
 
-	"github.com/orangeseeds/blitzbase/utils/schema"
+	dbx "github.com/go-ozzo/ozzo-dbx"
+	model "github.com/orangeseeds/blitzbase/models"
 )
 
-const (
-	BaseType = "BASE"
-	AuthType = "AUTH"
-)
+type FilterFunc func(q *dbx.SelectQuery) error
 
-type Collection interface {
-	TableName() string
-	TableSchema() map[string]string
-	RawSchema() []schema.FieldSchema
-	IsAuth() bool
-}
-
-type BaseColletion struct {
-	Id     int
-	Name   string
-	Type   string
-	System bool
-	Schema []schema.FieldSchema
-}
-
-func NewBaseCollection(name string, ctype string, system bool, schema []schema.FieldSchema) *BaseColletion {
-	c := BaseColletion{
-		Id:     0,
-		Name:   name,
-		Type:   ctype,
-		System: system,
-		Schema: schema,
-	}
-	c.addBasicFields()
-	return &c
-}
-
-func (bc BaseColletion) TableName() string {
-	if bc.System {
-		return bc.Name
-	}
-
-	switch strings.ToUpper(bc.Type) {
-	case BaseType:
-		return fmt.Sprintf("_base_collection_%s", bc.Name)
-	case AuthType:
-		return fmt.Sprintf("_auth_collection_%s", bc.Name)
+// TODO: If possible try to implement the Unmarshal directly inside schema
+func (s *BaseStore) FindCollectionByNameorId(db any, query string) (*model.Collection, error) {
+	var col model.Collection
+	var selectQuery *dbx.SelectQuery
+	switch db.(type) {
+	case *dbx.Tx:
+		selectQuery = db.(*dbx.Tx).Select().From(
+			col.TableName(),
+		)
+	case *dbx.DB:
+		selectQuery = db.(*dbx.DB).Select().From(
+			col.TableName(),
+		)
 	default:
-		return fmt.Sprintf("_%s", bc.Name)
+		return nil, fmt.Errorf("Type didnot fit in FindCollection!")
 	}
+
+	err := selectQuery.From(
+		col.TableName(),
+	).Where(
+		dbx.HashExp{"Name": query},
+	).OrWhere(
+		dbx.HashExp{"Id": query},
+	).One(&col)
+	if err != nil {
+		return nil, err
+	}
+
+	return &col, nil
 }
 
-func (bc *BaseColletion) addBasicFields() {
+func (s *BaseStore) SaveCollection(db any, col *model.Collection) error {
+	err := db.(*dbx.DB).Transactional(func(tx *dbx.Tx) error {
+		json, err := col.Schema.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		col.SetName(col.Name)
 
-	//     switch strings.ToUpper(bc.Type) {
-	//     case BaseType:
-	//
-	// }
-	bc.Schema = append(bc.Schema, schema.FieldSchema{
-		Name:     "id",
-		Type:     schema.INTEGER_FIELD,
-		Options:  schema.IntFieldOptions{},
-		Required: true,
-	})
+		params := dbx.Params{
+			"Id":     col.GetID(),
+			"Name":   col.GetName(),
+			"Type":   col.Type,
+			"Schema": string(json),
+			// "Rule":       col.Rule,
+			"IndexRule":  col.IndexRule,
+			"CreateRule": col.CreateRule,
+			"DetailRule": col.DetailRule,
+			"UpdateRule": col.UpdateRule,
+			"DeleteRule": col.DeleteRule,
 
-	bc.Schema = append(bc.Schema, schema.FieldSchema{
-		Name:     "created",
-		Type:     schema.TIMESTAMP_FIELD,
-		Options:  schema.TimeStampFieldOptions{},
-		Required: true,
-	})
-
-	bc.Schema = append(bc.Schema, schema.FieldSchema{
-		Name:     "updated",
-		Type:     schema.TIMESTAMP_FIELD,
-		Options:  schema.TimeStampFieldOptions{},
-		Required: true,
-	})
-
-}
-
-func (bc BaseColletion) TableSchema() map[string]string {
-	tableSchema := map[string]string{}
-
-	for _, s := range bc.Schema {
-		if s.Name == "id" {
-			tableSchema[s.Name] = "INTEGER PRIMARY KEY"
-			continue
+			"CreatedAt": time.Now().String(),
+			"UpdatedAt": time.Now().String(),
 		}
 
-		tableSchema[s.Name] = s.SQL()
+		switch db.(type) {
+		case *dbx.Tx:
+			_, err = db.(*dbx.Tx).Insert(col.TableName(), params).Execute()
+			if err != nil {
+				return err
+			}
+		case *dbx.DB:
+			_, err = db.(*dbx.DB).Insert(col.TableName(), params).Execute()
+			if err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("Type didnot fit in saveCollection!")
+		}
+		return nil
+	})
+	return err
+}
+
+func (s *BaseStore) DeleteCollection(db any, col *model.Collection) error {
+	err := s.DB().Model(col).Delete()
+	if err != nil {
+		return err
 	}
-	return tableSchema
-}
 
-func (bc BaseColletion) RawSchema() []schema.FieldSchema {
-	return bc.Schema
-}
-
-func (bc BaseColletion) IsAuth() bool {
-	return strings.ToUpper(bc.Type) == AuthType
+	_, err = s.DB().DropTable(col.GetName()).Execute()
+	return err
 }

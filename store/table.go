@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
-	model "github.com/orangeseeds/blitzbase/refactored/models"
+	model "github.com/orangeseeds/blitzbase/models"
 )
 
 func (s *BaseStore) TableExists(tableName string) bool {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/labstack/echo/v4"
-	"github.com/orangeseeds/blitzbase/refactored/core"
-	model "github.com/orangeseeds/blitzbase/refactored/models"
+	"github.com/orangeseeds/blitzbase/core"
+	model "github.com/orangeseeds/blitzbase/models"
 	"github.com/orangeseeds/blitzbase/utils"
 )
 
