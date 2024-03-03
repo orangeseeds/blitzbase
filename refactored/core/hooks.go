@@ -60,4 +60,3 @@ func (h *Hook[T]) Trigger(data T) error {
 	}
 	return nil
 }
-

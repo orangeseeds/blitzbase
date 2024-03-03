@@ -27,6 +27,13 @@ func main() {
 		ServerAddr: ":9900",
 	}, store)
 
+	go func() {
+		app.OnAdminAuth().Add(func(e *core.AdminEvent) error {
+			log.Println("Admin logged in", e.Admin)
+			return nil
+		})
+	}()
+
 	e := api.SetupServer(app)
 	e.Start(app.Addr())
 }

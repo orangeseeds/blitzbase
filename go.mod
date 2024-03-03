@@ -5,6 +5,7 @@ go 1.22.0
 require (
 	github.com/go-ozzo/ozzo-dbx v1.5.0
 	github.com/golang-migrate/migrate/v4 v4.16.2
+	github.com/labstack/echo/v4 v4.10.2
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/crypto v0.10.0
@@ -18,10 +19,8 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/labstack/echo/v4 v4.10.2 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
@@ -51,10 +50,8 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
-	github.com/labstack/echo-jwt v0.0.0-20221127215225-c84d41a71003
 	github.com/labstack/echo-jwt/v4 v4.2.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/orangeseeds/gmonkey v0.0.0-20230317040746-3f0bc4db8f0f
 	github.com/spf13/cast v1.6.0
 	github.com/spf13/pflag v1.0.5 // indirect
 )

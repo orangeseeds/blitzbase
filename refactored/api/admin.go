@@ -44,17 +44,30 @@ func (a *AdminAPI) index(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
+	event := core.AdminEvent{
+		Type:    core.IndexEvent,
+		Request: &c,
+	}
+	a.app.OnAdminIndex().Trigger(&event)
+
 	return c.JSON(200, admins)
 }
 
 func (a *AdminAPI) detail(c echo.Context) error {
 	id := c.Param("id")
-	col, err := a.app.Store().FindAdminById(a.app.Store().DB(), id)
+	admin, err := a.app.Store().FindAdminById(a.app.Store().DB(), id)
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
+
+	event := core.AdminEvent{
+		Type:    core.DetailEvent,
+		Admin:   admin,
+		Request: &c,
+	}
+	a.app.OnAdminDetail().Trigger(&event)
 	return c.JSON(200, map[string]any{
-		"admin": col,
+		"admin": admin,
 	})
 }
 
@@ -72,6 +85,13 @@ func (a *AdminAPI) save(c echo.Context) error {
 		return c.JSON(500, err.Error())
 	}
 
+	event := core.AdminEvent{
+		Type:    core.CreateEvent,
+		Admin:   &admin,
+		Request: &c,
+	}
+	a.app.OnAdminDetail().Trigger(&event)
+
 	return c.JSON(200, map[string]any{
 		"message": "saved successfully",
 		"admin":   admin,
@@ -86,6 +106,14 @@ func (a *AdminAPI) delete(c echo.Context) error {
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
+
+	event := core.AdminEvent{
+		Type:    core.DeleteEvent,
+		Admin:   &admin,
+		Request: &c,
+	}
+	a.app.OnAdminDelete().Trigger(&event)
+
 	return c.JSON(200, map[string]any{
 		"message": "deleted successfully",
 		"admin":   admin,
@@ -129,6 +157,14 @@ func (a *AdminAPI) authWithPassword(c echo.Context) error {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, authClaims)
 	// encode token using secret
 	encoded, err := jwtToken.SignedString([]byte("secret"))
+
+	event := core.AdminEvent{
+		Type:    core.AuthEvent,
+		Admin:   admin,
+		Request: &c,
+	}
+	a.app.OnAdminAuth().Trigger(&event)
+
 	return c.JSON(200, map[string]any{
 		"message": "auth with password success",
 		"token":   encoded,
@@ -190,6 +226,13 @@ func (a *AdminAPI) confirmResetPassword(c echo.Context) error {
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
+
+	event := core.AdminEvent{
+		Type:    core.UpdateEvent,
+		Admin:   admin,
+		Request: &c,
+	}
+	a.app.OnAdminUpdate().Trigger(&event)
 
 	return c.JSON(200, map[string]any{
 		"message": "password updated successfully!",

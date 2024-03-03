@@ -8,10 +8,10 @@ import (
 
 func TestApp(t *testing.T) {
 	app := DBApp{
-		onStart: &Hook[*AppStartEvent]{},
+		onStart: &Hook[*AppEvent]{},
 	}
 
-	id := app.OnStart().Add(func(e *AppStartEvent) error {
+	id := app.OnStart().Add(func(e *AppEvent) error {
 		t.Log("App started on port:", e.App.Addr())
 		return nil
 	})
