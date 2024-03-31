@@ -11,21 +11,23 @@ import (
 )
 
 func main() {
+	log.Printf("Serving on %s", ":9900")
 	dbPath := "data.db"
 	db, err := dbx.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	store := store.NewBaseStore(db)
+	st := store.NewSQliteStore(db)
 
-	store.CreateAdminTable()
-	store.CreateCollectionMetaTable()
+	exec := store.Wrap(db)
+	st.CreateAdminTable(exec)
+	st.CreateCollectionMetaTable(exec)
 
 	app := core.NewDBApp(core.DBAppConfig{
 		DbPath:     dbPath,
 		ServerAddr: ":9900",
-	}, store)
+	}, st)
 
 	go func() {
 		app.OnAdminAuth().Add(func(e *core.AdminEvent) error {

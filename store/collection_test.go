@@ -5,7 +5,7 @@ import (
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	_ "github.com/mattn/go-sqlite3"
-	model "github.com/orangeseeds/blitzbase/refactored/models"
+	model "github.com/orangeseeds/blitzbase/models"
 )
 
 func TestAllCollection(t *testing.T) {
@@ -15,12 +15,11 @@ func TestAllCollection(t *testing.T) {
 		t.Error(err)
 	}
 	var col []model.Collection
-    err =db.Select().From("_collection").All(&col)
-    if err != nil {
-        t.Error(err)
-    }
-    t.Log(col)
-
+	err = db.Select().From("_collection").All(&col)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(col)
 
 }
 

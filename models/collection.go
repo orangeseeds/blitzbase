@@ -16,15 +16,15 @@ const (
 type Collection struct {
 	BaseModel
 
-	Name       string         `db:"Name"`
-	Type       CollectionType `db:"Type"` // base,auth
-	Schema     Schema         `db:"Schema"`
+	Name       string         `db:"name"`
+	Type       CollectionType `db:"type"` // base,auth
+	Schema     Schema         `db:"schema"`
+	IndexRule  string         `db:"index_rule"`
+	DetailRule string         `db:"detail_rule"`
+	CreateRule string         `db:"create_rule"`
+	UpdateRule string         `db:"update_rule"`
+	DeleteRule string         `db:"delete_rule"`
 	// Rule       string         `db:"Rule"` // for now all rules, this needs to later be expanded to fit list, view, update, create and delete
-	IndexRule  string         `db:"IndexRule"`
-	DetailRule string         `db:"DetailRule"`
-	CreateRule string         `db:"CreateRule"`
-	UpdateRule string         `db:"UpdateRule"`
-	DeleteRule string         `db:"DeleteRule"`
 }
 
 func NewCollection(id string, name string, colType CollectionType) *Collection {
@@ -55,7 +55,7 @@ func (c *Collection) IsAuth() bool {
 // Provides an key,val pair of col name and datatype to build a new collection table
 func (c *Collection) DataDefn() map[string]string {
 	toExport := make(map[string]string)
-	toExport[FieldId] = FieldTypeText+ " primary key"
+	toExport[FieldId] = FieldTypeText + " primary key"
 	toExport[FieldCreatedAt] = FieldTypeText
 	toExport[FieldUpdatedAt] = FieldTypeText
 	for _, f := range c.Schema.GetFields() {

@@ -9,9 +9,9 @@ type Model interface {
 }
 
 type BaseModel struct {
-	Id        string `db:"Id"`
-	CreatedAt string `db:"CreatedAt"`
-	UpdatedAt string `db:"UpdatedAt"`
+	Id        string `db:"id"`
+	CreatedAt string `db:"created_at"`
+	UpdatedAt string `db:"updated_at"`
 }
 
 func NewBaseModel(id string) *BaseModel {

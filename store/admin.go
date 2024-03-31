@@ -7,6 +7,17 @@ import (
 	model "github.com/orangeseeds/blitzbase/models"
 )
 
+func (s *BaseStore) FindAdminByIdWrap(db DBExector, id string) (*model.Admin, error) {
+	var admin model.Admin
+	err := db.Select().From(admin.TableName()).Where(dbx.HashExp{
+		model.FieldId: id,
+	}).One(&admin)
+	if err != nil {
+		return nil, err
+	}
+	return &admin, nil
+}
+
 func (s *BaseStore) FindAdminById(db any, id string) (*model.Admin, error) {
 	var admin model.Admin
 	var selectQuery *dbx.SelectQuery
@@ -41,7 +52,7 @@ func (s *BaseStore) FindAdminByEmail(db any, email string) (*model.Admin, error)
 	}
 
 	err := selectQuery.From(admin.TableName()).Where(dbx.HashExp{
-		"Email": email,
+		model.FieldEmail: email,
 	}).One(&admin)
 	if err != nil {
 		return nil, err

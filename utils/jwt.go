@@ -5,16 +5,15 @@ import (
 )
 
 type JWTAuthClaims struct {
-	Id         string `json:"id"`
-	Type       JWTType `json:"type"`       // admin , collection
-	Collection string `json:"collection"` // auth collection id
+	Id         string       `json:"id"`
+	Type       JWTClaimType `json:"type"`       // admin , collection
+	Collection string       `json:"collection"` // auth collection id
 	jwt.RegisteredClaims
 }
 
-type JWTType string
+type JWTClaimType string
 
 const (
-	JWTAdmin      JWTType = "admin"
-	JWTCollection JWTType = "collection"
+	JwtTypeAdmin      JWTClaimType = "admin"
+	JwtTypeCollection JWTClaimType = "collection"
 )
-

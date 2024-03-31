@@ -11,27 +11,6 @@ import (
 	"github.com/orangeseeds/blitzbase/utils"
 )
 
-type jwtCustomClaims struct {
-	Name  string `json:"name"`
-	Admin bool   `json:"admin"`
-	jwt.RegisteredClaims
-}
-
-func LoadAdminAPI(app core.App, e *echo.Echo) {
-	api := AdminAPI{app: app}
-	grp := e.Group("/admins")
-
-	grp.GET("", api.index, LoadJWT(), NeedsAdminAuth(app))
-	grp.GET("/:id", api.detail, LoadJWT(), NeedsAdminAuth(app))
-
-	grp.POST("/auth-with-password", api.authWithPassword)
-	grp.POST("/reset-password", api.resetPassword)
-	grp.POST("/confirm-reset-password", api.confirmResetPassword)
-
-	grp.POST("", api.save, LoadJWT(), NeedsAdminAuth(app))
-	grp.DELETE("/:collection", api.delete, LoadJWT(), NeedsAdminAuth(app))
-}
-
 type AdminAPI struct {
 	app core.App
 }

@@ -22,20 +22,20 @@ type FieldName string
 
 // basic fields
 const (
-	FieldId       = "Id"
-	FieldEmail    = "Email"
-	FieldToken    = "Token"
-	FieldPassword = "Password"
+	FieldId       = "id"
+	FieldEmail    = "email"
+	FieldToken    = "token"
+	FieldPassword = "password"
 	// FieldRule     = "Rule"
 
-	FieldIndexRule  = "IndexRule"
-	FieldDetailRule = "DetailRule"
-	FieldUpdateRule = "UpdateRule"
-	FieldCreateRule = "CreateRule"
-	FieldDeleteRule = "DeleteRule"
+	FieldIndexRule  = "index_rule"
+	FieldDetailRule = "detail_rule"
+	FieldUpdateRule = "update_rule"
+	FieldCreateRule = "create_rule"
+	FieldDeleteRule = "delete_rule"
 
-	FieldCreatedAt = "CreatedAt"
-	FieldUpdatedAt = "UpdatedAt"
+	FieldCreatedAt = "created_at"
+	FieldUpdatedAt = "updated_at"
 )
 
 func AuthRecordFields() []string {
@@ -76,7 +76,7 @@ type Field struct {
 }
 
 type Schema struct {
-	Fields []*Field `json:"Fields"`
+	Fields []*Field `json:"fields"`
 }
 
 func (s *Schema) GetFields() []*Field {

@@ -8,17 +8,6 @@ import (
 	"github.com/orangeseeds/blitzbase/utils"
 )
 
-func LoadCollectionAPI(app core.App, e *echo.Echo) {
-	api := CollectionAPI{app: app}
-
-	grp := e.Group("/collections", LoadJWT(), NeedsAdminAuth(app))
-
-	grp.GET("", api.index)
-	grp.GET("/:collection", api.detail)
-	grp.POST("", api.save)
-	grp.DELETE("/:collection", api.delete)
-}
-
 type CollectionAPI struct {
 	app core.App
 }
@@ -84,8 +73,10 @@ func (a *CollectionAPI) save(c echo.Context) error {
 	if err != nil {
 		return c.JSON(500, err.Error())
 	}
-	if !a.app.Store().(*store.BaseStore).TableExists(col.GetName()) {
-		err = a.app.Store().CreateCollectionTable(&col)
+
+	exec := store.Wrap(a.app.Store().DB())
+	if !a.app.Store().TableExists(exec, col.GetName()) {
+		err = a.app.Store().CreateCollectionTable(exec, &col)
 		if err != nil {
 			return c.JSON(500, err.Error())
 		}

@@ -20,6 +20,7 @@ func (s *BaseStore) TableExists(tableName string) bool {
 }
 
 func (s *BaseStore) createTable(name string, defn map[string]string) error {
+
 	query := s.DB().CreateTable(name, defn)
 	if _, err := query.Execute(); err != nil {
 		return err
@@ -35,7 +36,7 @@ func (s *BaseStore) CreateCollectionTable(c *model.Collection) error {
 		return fmt.Errorf("Table with name %s already exists.", c.GetName())
 	}
 
-    err := s.createTable(c.GetName(), c.DataDefn())
+	err := s.createTable(c.GetName(), c.DataDefn())
 	if err != nil {
 		return err
 	}

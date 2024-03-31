@@ -10,39 +10,41 @@ type Store interface {
 	Path() string
 	MigrationsPath() string
 
-	CreateAdminTable() error
-	CreateCollectionMetaTable() error
-	CreateCollectionTable(*model.Collection) error
+	TableExists(db DBExector, tableName string) bool
+	CreateCollectionTable(db DBExector, c *model.Collection) error
+	CreateAdminTable(db DBExector) error
+	CreateCollectionMetaTable(db DBExector) error
+
 	// CreateMigrationsTable() error
 
-	FindCollectionByNameorId(any, string) (*model.Collection, error)
-	SaveCollection(any, *model.Collection) error
-	DeleteCollection(any, *model.Collection) error
+	FindCollectionByNameorId(db DBExector, query string) (*model.Collection, error)
+	SaveCollection(db DBExector, col *model.Collection) error
+	DeleteCollection(db DBExector, col *model.Collection) error
 
-	FindAdminById(any, string) (*model.Admin, error)
-	FindAdminByEmail(any, string) (*model.Admin, error)
-	FindAdminByToken(any, string) (*model.Admin, error)
-	CheckAdminEmailIsUnique(any, string) bool
-	SaveAdmin(any, *model.Admin) error
-	UpdateAdmin(any, *model.Admin) error
-	DeleteAdmin(any, *model.Admin) error
+	FindAdminById(db DBExector, id string) (*model.Admin, error)
+	FindAdminByEmail(db DBExector, email string) (*model.Admin, error)
+	FindAdminByToken(db DBExector, token string) (*model.Admin, error)
+	CheckAdminEmailIsUnique(db DBExector, email string) bool
+	SaveAdmin(db DBExector, a *model.Admin) error
+	UpdateAdmin(db DBExector, a *model.Admin) error
+	DeleteAdmin(db DBExector, a *model.Admin) error
 
-	AuthRecordEmailIsUnique(any, string, string) bool
-	FindAuthRecordByToken(any, string, string) (*model.Record, error)
-	FindAuthRecordByEmail(any, string, string) (*model.Record, error)
-	FindRecordsAll(any, string, ...FilterFunc) ([]*model.Record, error)
-	FindRecordById(any, string, string, ...FilterFunc) (*model.Record, error)
+	FindRecordsAll(db DBExector, collectionId string, filters ...FilterFunc) ([]*model.Record, error)
+	FindRecordById(db DBExector, id string, collectionId string, filters ...FilterFunc) (*model.Record, error)
+	SaveRecord(db DBExector, r *model.Record, filters ...FilterFunc) error
+	DeleteRecord(db DBExector, r *model.Record) error
+
+	FindAuthRecordByEmail(db DBExector, collectionId string, email string) (*model.Record, error)
+	FindAuthRecordByToken(db DBExector, collectionId string, token string) (*model.Record, error)
+	AuthRecordEmailIsUnique(db DBExector, collection string, email string) bool
 	// FindRecordsByExpr(...dbx.Expression) ([]*model.Record, error)
-	SaveRecord(any, *model.Record, ...FilterFunc) error
-	UpdateRecord(any, string, *model.Record, ...FilterFunc) error
-	DeleteRecord(any, *model.Record) error
+	UpdateRecord(db DBExector, collection string, r *model.Record, filters ...FilterFunc) error
 
 	// ExpandRecord()
 }
 
 type BaseStore struct {
 	db             *dbx.DB
-	tx             *dbx.Tx
 	isTransaction  bool
 	path           string
 	migrationsPath string
@@ -56,9 +58,6 @@ func NewBaseStore(db *dbx.DB) *BaseStore {
 	}
 }
 
-func (s *BaseStore) Tx() *dbx.Tx {
-	return s.tx
-}
 func (s *BaseStore) DB() *dbx.DB {
 	return s.db
 }

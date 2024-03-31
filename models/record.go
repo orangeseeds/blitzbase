@@ -27,12 +27,13 @@ func NewRecord(c *Collection) *Record {
 	}
 }
 
-func (r *Record) LoadNullStringMap(data dbx.NullStringMap) {
+func (r *Record) LoadNullStringMap(data dbx.NullStringMap) *Record {
 	for key, val := range data {
 		if val.Valid {
 			r.Set(key, val.String)
 		}
 	}
+	return r
 }
 
 func (r *Record) Load(data map[string]any) {
