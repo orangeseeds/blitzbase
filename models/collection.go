@@ -66,20 +66,17 @@ func (c *Collection) DataDefn() map[string]string {
 
 func (c *Collection) MetaDataDefn() map[string]string {
 	return map[string]string{
-		"Id":     FieldTypeText + " primary key",
-		"Name":   FieldTypeText,
-		"Type":   FieldTypeText,
-		"Schema": FieldTypeJson,
-		// "Rule":   FieldTypeText,
-
-		"CreateRule": FieldTypeText,
-		"UpdateRule": FieldTypeText,
-		"IndexRule":  FieldTypeText,
-		"DetailRule": FieldTypeText,
-		"DeleteRule": FieldTypeText,
-
-		"CreatedAt": FieldTypeText,
-		"UpdatedAt": FieldTypeText,
+		FieldId:         FieldTypeText + " primary key",
+		FieldName:       FieldTypeText,
+		FieldType:       FieldTypeText,
+		FieldSchema:     FieldTypeJson,
+		FieldIndexRule:  FieldTypeText,
+		FieldCreateRule: FieldTypeText,
+		FieldDetailRule: FieldTypeText,
+		FieldUpdateRule: FieldTypeText,
+		FieldDeleteRule: FieldTypeText,
+		FieldCreatedAt:  FieldTypeText,
+		FieldUpdatedAt:  FieldTypeText,
 	}
 }
 

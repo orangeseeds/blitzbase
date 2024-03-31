@@ -3,9 +3,8 @@ package model
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
-	"github.com/orangeseeds/blitzbase/utils"
+	"github.com/google/uuid"
 )
 
 const (
@@ -18,15 +17,20 @@ const (
 	FieldTypeRelation = "relation"
 )
 
-type FieldName string
+type CommonFieldName string
 
 // basic fields
 const (
 	FieldId       = "id"
 	FieldEmail    = "email"
+	FieldName     = "email"
 	FieldToken    = "token"
 	FieldPassword = "password"
+	FieldType     = "type"
 	// FieldRule     = "Rule"
+
+	FieldSchema  = "schema"
+	FieldOptions = "options"
 
 	FieldIndexRule  = "index_rule"
 	FieldDetailRule = "detail_rule"
@@ -38,14 +42,25 @@ const (
 	FieldUpdatedAt = "updated_at"
 )
 
+func CollectionFieldsFields() []string {
+	return []string{
+		FieldId,
+		FieldName,
+		FieldType,
+		FieldSchema,
+		FieldOptions,
+		FieldIndexRule,
+		FieldDetailRule,
+		FieldUpdateRule,
+		FieldDeleteRule,
+	}
+}
+
 func AuthRecordFields() []string {
 	return []string{
-		FieldPassword,
 		FieldEmail,
-		FieldToken,
 		FieldPassword,
-		// FieldCreatedAt,
-		// FieldUpdatedAt,
+		FieldToken,
 	}
 }
 
@@ -58,7 +73,7 @@ func BaseFields() []string {
 	}
 }
 
-func (f FieldName) String() string {
+func (f CommonFieldName) String() string {
 	return string(f)
 }
 
@@ -85,7 +100,7 @@ func (s *Schema) GetFields() []*Field {
 
 func (s *Schema) AddField(newField *Field) {
 	if newField.Id == "" {
-		newField.Id = strings.ToLower(utils.RandStr(10))
+		newField.Id = uuid.NewString()
 	}
 
 	for i, field := range s.Fields {

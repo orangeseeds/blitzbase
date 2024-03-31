@@ -100,19 +100,17 @@ func (s *SQliteStore) SaveCollection(db DBExector, col *model.Collection) error 
 	}
 	col.SetName(col.Name)
 	params := dbx.Params{
-		"Id":     col.GetID(),
-		"Name":   col.GetName(),
-		"Type":   col.Type,
-		"Schema": string(json),
-		// "Rule":       col.Rule,
-		"IndexRule":  col.IndexRule,
-		"CreateRule": col.CreateRule,
-		"DetailRule": col.DetailRule,
-		"UpdateRule": col.UpdateRule,
-		"DeleteRule": col.DeleteRule,
-
-		"CreatedAt": time.Now().String(),
-		"UpdatedAt": time.Now().String(),
+		model.FieldId:         col.GetID(),
+		model.FieldName:       col.GetName(),
+		model.FieldType:       col.Type,
+		model.FieldSchema:     string(json),
+		model.FieldIndexRule:  col.IndexRule,
+		model.FieldCreateRule: col.CreateRule,
+		model.FieldDetailRule: col.DetailRule,
+		model.FieldUpdateRule: col.UpdateRule,
+		model.FieldDeleteRule: col.DeleteRule,
+		model.FieldCreatedAt:  time.Now().String(),
+		model.FieldUpdatedAt:  time.Now().String(),
 	}
 	_, err = db.Insert(col.TableName(), params).Execute()
 	return err
@@ -132,7 +130,7 @@ func (s *SQliteStore) FindAdminById(db DBExector, id string) (*model.Admin, erro
 	err := db.Select().
 		From(admin.TableName()).
 		Where(dbx.HashExp{
-			"Id": id,
+			model.FieldId: id,
 		}).One(&admin)
 	return &admin, err
 }
@@ -142,7 +140,7 @@ func (s *SQliteStore) FindAdminByEmail(db DBExector, email string) (*model.Admin
 	err := db.(*dbx.DB).Select().
 		From(admin.TableName()).
 		Where(dbx.HashExp{
-			"Email": email,
+			model.FieldEmail: email,
 		}).One(&admin)
 	return &admin, err
 }
@@ -152,7 +150,7 @@ func (s *SQliteStore) FindAdminByToken(db DBExector, token string) (*model.Admin
 	err := db.Select().
 		From(admin.TableName()).
 		Where(dbx.HashExp{
-			"Token": token,
+			model.FieldToken: token,
 		}).One(&admin)
 	return &admin, err
 }
@@ -166,7 +164,7 @@ func (s *SQliteStore) CheckAdminEmailIsUnique(db DBExector, email string) bool {
 
 	err := db.Select("count(*)").
 		From(admin.TableName()).
-		Where(dbx.HashExp{"email": email}).
+		Where(dbx.HashExp{model.FieldEmail: email}).
 		Limit(1).Row(&exists)
 	if err != nil {
 		return false
@@ -229,7 +227,7 @@ func (s *SQliteStore) FindRecordById(db DBExector, id string, collectionId strin
 
 	query := db.Select().From(col.GetName()).
 		AndWhere(dbx.HashExp{
-			"Id": id,
+			model.FieldId: id,
 		})
 	for _, filter := range filters {
 		if filter == nil {

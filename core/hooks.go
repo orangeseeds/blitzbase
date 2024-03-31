@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/orangeseeds/blitzbase/utils"
+	"github.com/google/uuid"
 )
 
 /*
@@ -30,7 +30,7 @@ type Hook[T any] struct {
 }
 
 func (h *Hook[T]) Add(handler HandlerFunc[T]) string {
-	id := utils.RandStr(8)
+	id := uuid.NewString()
 	h.handlers = append(h.handlers, &Handler[T]{
 		id:          id,
 		handlerFunc: handler,

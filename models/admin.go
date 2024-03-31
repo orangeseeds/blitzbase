@@ -3,16 +3,16 @@ package model
 import (
 	"errors"
 
-	"github.com/orangeseeds/blitzbase/utils"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Admin struct {
 	BaseModel
 
-	Email    string `db:"Email"`
-	Token    string `db:"Token"`
-	Password string `db:"Password"` // hash
+	Email    string `db:"email"`
+	Token    string `db:"token"`
+	Password string `db:"password"` // hash
 
 	// Rule string `db:"Rule"` // for now all rules
 }
@@ -51,15 +51,15 @@ func (a *Admin) SetPassword(password string) error {
 }
 
 func (a *Admin) RefreshToken() {
-	a.Token = utils.RandStr(24)
+	a.Token = uuid.NewString()
 }
 
 // Provides an export to build the _admin_users table
 func (a *Admin) ExportForTable() map[string]string {
 	schema := map[string]string{
-		"Email":    FieldTypeText,
-		"Token":    FieldTypeText,
-		"Password": FieldTypeText,
+		FieldEmail:    FieldTypeText,
+		FieldToken:    FieldTypeText,
+		FieldPassword: FieldTypeText,
 	}
 	for _, v := range BaseFields() {
 		if v == FieldId {

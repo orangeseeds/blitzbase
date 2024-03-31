@@ -50,19 +50,17 @@ func (s *BaseStore) SaveCollection(db any, col *model.Collection) error {
 		col.SetName(col.Name)
 
 		params := dbx.Params{
-			"Id":     col.GetID(),
-			"Name":   col.GetName(),
-			"Type":   col.Type,
-			"Schema": string(json),
-			// "Rule":       col.Rule,
-			"IndexRule":  col.IndexRule,
-			"CreateRule": col.CreateRule,
-			"DetailRule": col.DetailRule,
-			"UpdateRule": col.UpdateRule,
-			"DeleteRule": col.DeleteRule,
-
-			"CreatedAt": time.Now().String(),
-			"UpdatedAt": time.Now().String(),
+			model.FieldId:         col.GetID(),
+			model.FieldName:       col.GetName(),
+			model.FieldType:       col.Type,
+			model.FieldSchema:     string(json),
+			model.FieldIndexRule:  col.IndexRule,
+			model.FieldCreateRule: col.CreateRule,
+			model.FieldDetailRule: col.DetailRule,
+			model.FieldUpdateRule: col.UpdateRule,
+			model.FieldDeleteRule: col.DeleteRule,
+			model.FieldCreatedAt:  time.Now().String(),
+			model.FieldUpdatedAt:  time.Now().String(),
 		}
 
 		switch db.(type) {

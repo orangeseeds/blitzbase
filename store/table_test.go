@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	model "github.com/orangeseeds/blitzbase/models"
-	"github.com/orangeseeds/blitzbase/utils"
 )
 
 func TestCreateCollectionsTable(t *testing.T) {
@@ -33,7 +33,7 @@ func TestCreateAdminTable(t *testing.T) {
 	store := BaseStore{db: db}
 
 	var base model.BaseModel
-	base.SetID(utils.RandStr(10))
+	base.SetID(uuid.NewString())
 
 	err = store.CreateAdminTable()
 	if err != nil {
@@ -48,15 +48,15 @@ func TestCreateCollectionTable(t *testing.T) {
 	}
 	store := BaseStore{db: db}
 
-	col := model.NewCollection(utils.RandStr(10), "test_collection", model.BASE)
+	col := model.NewCollection(uuid.NewString(), "test_collection", model.BASE)
 	col.Schema.AddField(&model.Field{
-		Id:      utils.RandStr(10),
+		Id:      uuid.NewString(),
 		Name:    "field_one",
 		Type:    model.FieldTypeText,
 		Options: nil,
 	})
 	col.Schema.AddField(&model.Field{
-		Id:      utils.RandStr(10),
+		Id:      uuid.NewString(),
 		Name:    "field_two",
 		Type:    model.FieldTypeNumber,
 		Options: nil,

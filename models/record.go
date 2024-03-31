@@ -7,7 +7,7 @@ import (
 	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
-	"github.com/orangeseeds/blitzbase/utils"
+	"github.com/google/uuid"
 	"github.com/spf13/cast"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -66,7 +66,7 @@ func (r *Record) Set(key string, val any) {
 }
 
 func (r *Record) Get(key string) any {
-	switch FieldName(key) {
+	switch CommonFieldName(key) {
 	case FieldId:
 		return r.GetID()
 	default:
@@ -140,7 +140,7 @@ func (a *Record) SetPassword(password string) error {
 }
 
 func (a *Record) RefreshToken() {
-	a.Set(string(FieldToken), utils.RandStr(24))
+	a.Set(string(FieldToken), uuid.NewString())
 }
 
 func (m *Record) GetBool(key string) bool {

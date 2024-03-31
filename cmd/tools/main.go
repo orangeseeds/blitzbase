@@ -5,10 +5,10 @@ import (
 	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	model "github.com/orangeseeds/blitzbase/models"
 	"github.com/orangeseeds/blitzbase/store"
-	"github.com/orangeseeds/blitzbase/utils"
 )
 
 func main() {
@@ -19,21 +19,28 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	store := store.NewBaseStore(db)
+	st := store.NewSQliteStore(db)
 
-	store.CreateAdminTable()
-	store.CreateCollectionMetaTable()
+	exec := store.Wrap(db)
+	st.CreateAdminTable(exec)
+	st.CreateCollectionMetaTable(exec)
 
-	col := model.NewCollection(utils.RandStr(10), "test_collection", model.BASE)
+	col := model.NewCollection(uuid.NewString(), "test_collection", model.BASE)
 	col.Schema.AddField(&model.Field{"1", "FieldName", model.FieldTypeText, nil})
 	col.Schema.AddField(&model.Field{"2", "FieldName2", model.FieldTypeText, nil})
 
-	store.SaveCollection(store.DB(), col)
-	store.CreateCollectionTable(col)
+	err = st.SaveCollection(st.DB(), col)
+	if err != nil {
+		log.Println(err)
+	}
+	err = st.CreateCollectionTable(exec, col)
+	if err != nil {
+		log.Println(err)
+	}
 
 	admin := model.Admin{
 		BaseModel: model.BaseModel{
-			Id:        utils.RandStr(10),
+			Id:        uuid.NewString(),
 			CreatedAt: time.Now().String(),
 			UpdatedAt: time.Now().String(),
 		},

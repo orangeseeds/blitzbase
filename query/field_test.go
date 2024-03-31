@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	model "github.com/orangeseeds/blitzbase/models"
 	"github.com/orangeseeds/blitzbase/store"
-	"github.com/orangeseeds/blitzbase/utils"
 )
 
 func setup() (*store.BaseStore, error) {
@@ -26,7 +26,7 @@ func TestCollection(t *testing.T) {
 		t.Error(err)
 	}
 
-	collection := model.NewCollection(utils.RandStr(10), "test_collection", model.BASE)
+	collection := model.NewCollection(uuid.NewString(), "test_collection", model.BASE)
 
 	fieldSpec := RecordFieldSpecifier{
 		Collection:    collection,
@@ -62,7 +62,7 @@ func TestCollectionSave(t *testing.T) {
 	collection, err := store.FindCollectionByNameorId(store.DB(), "test_collection")
 	rec := model.NewRecord(collection)
 	rec.Load(map[string]any{
-		"Id":        utils.RandStr(10),
+		"Id":        uuid.NewString(),
 		"field_one": "naice",
 		"field_two": 10,
 	})

@@ -41,13 +41,14 @@ func NeedsAdminAuth(app core.App) echo.MiddlewareFunc {
 			if authClaims.Type != utils.JwtTypeAdmin {
 				return c.JSON(400, "jwt type is not admin")
 			}
-			// admin, err := app.Store().FindAdminById(app.Store().DB(), authClaims.Id)
-			// if err != nil {
-			// 	return c.JSON(500, map[string]any{
-			// 		"message": "invalid jwt token",
-			// 	})
-			// }
-			// c.Set("admin", admin)
+
+			admin, err := app.Store().FindAdminById(app.Store().DB(), authClaims.Id)
+			if err != nil {
+				return c.JSON(500, map[string]any{
+					"message": "invalid jwt token",
+				})
+			}
+			c.Set("admin", admin)
 			return next(c)
 		}
 	}

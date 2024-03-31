@@ -1,11 +1,11 @@
 package api
 
 import (
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/orangeseeds/blitzbase/core"
 	model "github.com/orangeseeds/blitzbase/models"
 	"github.com/orangeseeds/blitzbase/store"
-	"github.com/orangeseeds/blitzbase/utils"
 )
 
 type CollectionAPI struct {
@@ -59,7 +59,7 @@ func (a *CollectionAPI) save(c echo.Context) error {
 
 			if !col.Schema.HasField(v) {
 				f := model.Field{
-					Id:      utils.RandStr(10),
+					Id:      uuid.NewString(),
 					Name:    v,
 					Type:    model.FieldTypeText,
 					Options: nil,
