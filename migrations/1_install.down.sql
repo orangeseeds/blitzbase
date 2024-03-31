@@ -1,3 +1,0 @@
-DROP TABLE IF EXISTS _admins;
-DROP TABLE IF EXISTS _collections;
-DROP TABLE IF EXISTS users;

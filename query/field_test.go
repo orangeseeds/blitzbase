@@ -10,12 +10,12 @@ import (
 	"github.com/orangeseeds/blitzbase/store"
 )
 
-func setup() (*store.BaseStore, error) {
+func setup() (*store.SQliteStore, error) {
 	db, err := dbx.Open("sqlite3", "./test.db")
 	if err != nil {
 		return nil, err
 	}
-	store := store.NewBaseStore(db)
+	store := store.NewSQliteStore(db)
 	return store, err
 
 }

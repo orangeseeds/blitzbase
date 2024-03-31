@@ -2,13 +2,13 @@ package main
 
 import (
 	"log"
-	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	model "github.com/orangeseeds/blitzbase/models"
 	"github.com/orangeseeds/blitzbase/store"
+	"github.com/orangeseeds/blitzbase/utils"
 )
 
 func main() {
@@ -41,8 +41,8 @@ func main() {
 	admin := model.Admin{
 		BaseModel: model.BaseModel{
 			Id:        uuid.NewString(),
-			CreatedAt: time.Now().String(),
-			UpdatedAt: time.Now().String(),
+			CreatedAt: utils.NowDateTime(),
+			UpdatedAt: utils.NowDateTime(),
 		},
 		Email: "admin@mail.com",
 	}

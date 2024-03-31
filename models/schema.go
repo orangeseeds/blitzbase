@@ -23,7 +23,7 @@ type CommonFieldName string
 const (
 	FieldId       = "id"
 	FieldEmail    = "email"
-	FieldName     = "email"
+	FieldName     = "name"
 	FieldToken    = "token"
 	FieldPassword = "password"
 	FieldType     = "type"
@@ -91,7 +91,7 @@ type Field struct {
 }
 
 type Schema struct {
-	Fields []*Field `json:"fields"`
+    Fields []*Field `json:"fields" validate:"unique=Name"`
 }
 
 func (s *Schema) GetFields() []*Field {

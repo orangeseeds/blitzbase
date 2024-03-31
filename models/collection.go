@@ -44,7 +44,7 @@ func (c *Collection) GetName() string {
 	return c.Name
 }
 
-func (c *Collection) TableName() string {
+func (c Collection) TableName() string {
 	return "_collection"
 }
 

@@ -1,17 +1,17 @@
 package model
 
+import "github.com/orangeseeds/blitzbase/utils"
+
 type Model interface {
-	GetID() string
 	TableName() string
-	SetID(id string)
 
 	// created at updatedat remaining
 }
 
 type BaseModel struct {
-	Id        string `db:"id"`
-	CreatedAt string `db:"created_at"`
-	UpdatedAt string `db:"updated_at"`
+	Id        string         `db:"id"`
+	CreatedAt utils.DateTime `db:"created_at"`
+	UpdatedAt utils.DateTime `db:"updated_at"`
 }
 
 func NewBaseModel(id string) *BaseModel {
@@ -23,6 +23,7 @@ func NewBaseModel(id string) *BaseModel {
 func (b *BaseModel) GetID() string {
 	return b.Id
 }
+
 func (b *BaseModel) SetID(id string) {
 	b.Id = id
 }

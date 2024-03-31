@@ -1,3 +1,0 @@
-CREATE TABLE "_admins" ("email" varchar(255) UNIQUE NOT NULL, "id" INTEGER PRIMARY KEY, "password" varchar(255) NOT NULL);
-CREATE TABLE "_collections" ("id" INTEGER PRIMARY KEY, "name" varchar(255) NOT NULL, "schema" json NOT NULL, "type" integer NOT NULL);
-CREATE TABLE "users" ("created" TIMESTAMP DEFAULT CURRENT_TIMESTAMP  NOT NULL, "email" TEXT DEFAULT ""  NOT NULL, "id" INTEGER PRIMARY KEY, "password" TEXT DEFAULT ""  NOT NULL, "updated" TIMESTAMP DEFAULT CURRENT_TIMESTAMP  NOT NULL, "username" TEXT DEFAULT ""  NOT NULL);

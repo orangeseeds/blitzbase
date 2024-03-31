@@ -1,10 +1,13 @@
 package api
 
 import (
+	"log"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/orangeseeds/blitzbase/core"
 	model "github.com/orangeseeds/blitzbase/models"
+	"github.com/orangeseeds/blitzbase/request"
 	"github.com/orangeseeds/blitzbase/store"
 )
 
@@ -17,7 +20,7 @@ func (a *CollectionAPI) index(c echo.Context) error {
 	var col []model.Collection
 	err := a.app.Store().DB().Select().From(colOne.TableName()).All(&col)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewApiError(500, "", err)
 	}
 
 	a.app.OnCollectionIndex().Trigger(&core.CollectionEvent{
@@ -30,9 +33,10 @@ func (a *CollectionAPI) index(c echo.Context) error {
 
 func (a *CollectionAPI) detail(c echo.Context) error {
 	name := c.Param("collection")
-	col, err := a.app.Store().FindCollectionByNameorId(a.app.Store().DB(), name)
+	exec := store.Wrap(a.app.Store().DB())
+	col, err := a.app.Store().FindCollectionByNameorId(exec, name)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewNotFoundError("", err)
 	}
 
 	a.app.OnCollectionDetail().Trigger(&core.CollectionEvent{
@@ -47,17 +51,16 @@ func (a *CollectionAPI) detail(c echo.Context) error {
 }
 
 func (a *CollectionAPI) save(c echo.Context) error {
-	var col model.Collection
-
-	err := c.Bind(&col)
+	req, err := request.JsonValidate[model.Collection, request.CollectionSaveRequest](c)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("", err)
 	}
+	col := req.Model()
 
 	if col.IsAuth() {
 		for _, v := range model.AuthRecordFields() {
-
 			if !col.Schema.HasField(v) {
+				log.Println(v)
 				f := model.Field{
 					Id:      uuid.NewString(),
 					Name:    v,
@@ -68,17 +71,17 @@ func (a *CollectionAPI) save(c echo.Context) error {
 			}
 		}
 	}
-
-	err = a.app.Store().SaveCollection(a.app.Store().DB(), &col)
+	col.SetID(uuid.NewString())
+	exec := store.Wrap(a.app.Store().DB())
+	err = a.app.Store().SaveCollection(exec, &col)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("Failed to save collection", err)
 	}
 
-	exec := store.Wrap(a.app.Store().DB())
 	if !a.app.Store().TableExists(exec, col.GetName()) {
 		err = a.app.Store().CreateCollectionTable(exec, &col)
 		if err != nil {
-			return c.JSON(500, err.Error())
+			return NewBadRequestError("Failed to create collection table", err)
 		}
 	}
 
@@ -97,9 +100,10 @@ func (a *CollectionAPI) save(c echo.Context) error {
 func (a *CollectionAPI) delete(c echo.Context) error {
 	var col model.Collection
 	col.SetID(c.Param("collection"))
-	err := a.app.Store().DeleteCollection(a.app.Store().DB(), &col)
+	exec := store.Wrap(a.app.Store().DB())
+	err := a.app.Store().DeleteCollection(exec, &col)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("", map[string]any{"data": err.Error()})
 	}
 
 	a.app.OnCollectionDelete().Trigger(&core.CollectionEvent{

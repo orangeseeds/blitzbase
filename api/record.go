@@ -1,13 +1,15 @@
 package api
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/orangeseeds/blitzbase/core"
 	model "github.com/orangeseeds/blitzbase/models"
+	"github.com/orangeseeds/blitzbase/request"
+	"github.com/orangeseeds/blitzbase/store"
 	"github.com/orangeseeds/blitzbase/utils"
 )
 
@@ -18,11 +20,12 @@ type RecordAPI struct {
 func (a *RecordAPI) index(c echo.Context) error {
 	collection, ok := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
 	if !ok {
-		return c.JSON(500, fmt.Errorf("couldnt conver to collection").Error())
+		return NewApiError(500, "some error occured", nil)
 	}
-	records, err := a.app.Store().FindRecordsAll(a.app.Store().DB(), collection.Name)
+	exec := store.Wrap(a.app.Store().DB())
+	records, err := a.app.Store().FindRecordsAll(exec, collection.Name)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewApiError(500, "some error occured", err)
 	}
 
 	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
@@ -37,10 +40,11 @@ func (a *RecordAPI) index(c echo.Context) error {
 
 func (a *RecordAPI) detail(c echo.Context) error {
 	id := c.Param("record")
-	col := c.Param("collection")
-	record, err := a.app.Store().FindRecordById(a.app.Store().DB(), id, col)
+	col := c.Param(CtxCollectionKey)
+	exec := store.Wrap(a.app.Store().DB())
+	record, err := a.app.Store().FindRecordById(exec, id, col)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewNotFoundError("", err)
 	}
 
 	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
@@ -55,25 +59,27 @@ func (a *RecordAPI) detail(c echo.Context) error {
 }
 
 func (a *RecordAPI) save(c echo.Context) error {
-	col := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
+	col, _ := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
 
 	record := model.NewRecord(col)
 
 	err := c.Bind(record)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("", err)
 	}
 
 	if col.IsAuth() {
 		err := record.SetPassword(record.GetString(model.FieldPassword))
 		if err != nil {
-			return c.JSON(500, err.Error())
+			return NewApiError(500, "some error occured", err)
 		}
 	}
 
-	err = a.app.Store().SaveRecord(a.app.Store().DB(), record)
+	exec := store.Wrap(a.app.Store().DB())
+	record.SetID(uuid.NewString())
+	err = a.app.Store().SaveRecord(exec, record)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("error occured when saving record.", err)
 	}
 
 	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
@@ -89,11 +95,13 @@ func (a *RecordAPI) save(c echo.Context) error {
 }
 
 func (a *RecordAPI) delete(c echo.Context) error {
-	col := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
+	col, _ := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
 	record := model.NewRecord(col)
-	err := a.app.Store().DeleteRecord(a.app.Store().DB(), record)
+
+	exec := store.Wrap(a.app.Store().DB())
+	err := a.app.Store().DeleteRecord(exec, record)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("error occured when deleting record.", err)
 	}
 
 	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
@@ -112,34 +120,27 @@ type AuthRecordAPI struct {
 }
 
 func (a *AuthRecordAPI) authWithPassword(c echo.Context) error {
-	var authReq struct {
-		Email    string `json:"email" validate:"required"`
-		Password string `json:"password" validate:"required"`
-	}
-	err := c.Bind(&authReq)
+	req, err := request.JsonValidate[model.Record, request.RecordAuthWithPasswordRequest](c)
 	if err != nil {
-		return c.JSON(400, err.Error())
-	}
-	err = c.Validate(authReq)
-	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewBadRequestError("", err)
 	}
 
-	col := c.Get("collection").(*model.Collection)
+	col, _ := c.Get(CtxCollectionKey).(*model.Collection)
 
-	record, err := a.app.Store().FindAuthRecordByEmail(a.app.Store().DB(), col.GetName(), authReq.Email)
+	exec := store.Wrap(a.app.Store().DB())
+	record, err := a.app.Store().FindAuthRecordByEmail(exec, col.GetName(), req.Email)
 	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewNotFoundError("record with given email not found.", err)
 	}
-	valid := record.ValidatePassword(authReq.Password)
+	valid := record.ValidatePassword(req.Password)
 	if !valid {
-		return c.JSON(400, "Password didnot match!")
+		return NewNotFoundError("record with given email and password not found.", err)
 	}
 
 	// give claims
 	authClaims := utils.JWTAuthClaims{
 		Id:         record.Id,
-		Type:       "collection",
+		Type:       utils.JwtTypeCollection,
 		Collection: record.TableName(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
@@ -163,23 +164,17 @@ func (a *AuthRecordAPI) authWithPassword(c echo.Context) error {
 }
 
 func (a *AuthRecordAPI) resetPassword(c echo.Context) error {
-	var resetReq struct {
-		Email string `json:"email" validate:"required"`
-	}
-	err := c.Bind(&resetReq)
+	req, err := request.JsonValidate[model.Record, request.RecordResetPasswordRequest](c)
 	if err != nil {
-		return c.JSON(400, err.Error())
-	}
-	err = c.Validate(resetReq)
-	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewBadRequestError("", err)
 	}
 
-	collection := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
+	coll, _ := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
 
-	record, err := a.app.Store().FindAuthRecordByEmail(a.app.Store().DB(), collection.Name, resetReq.Email)
+	exec := store.Wrap(a.app.Store().DB())
+	record, err := a.app.Store().FindAuthRecordByEmail(exec, coll.GetName(), req.Email)
 	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewNotFoundError("record with given email not found.", err)
 	}
 
 	// email to admin.Email
@@ -189,39 +184,25 @@ func (a *AuthRecordAPI) resetPassword(c echo.Context) error {
 }
 
 func (a *AuthRecordAPI) confirmResetPassword(c echo.Context) error {
-	var confirmReq struct {
-		Token           string `json:"token" validate:"required"`
-		Password        string `json:"password" validate:"required"`
-		ConfirmPassword string `json:"confirm_password" validate:"required"`
-	}
-
-	err := c.Bind(&confirmReq)
-	if err != nil {
-		return c.JSON(400, err.Error())
-	}
-
-	err = c.Validate(confirmReq)
-	if err != nil {
-		return c.JSON(400, err.Error())
-	}
-
-	if confirmReq.Password != confirmReq.ConfirmPassword {
-		return c.JSON(400, "password and confirm_password not equal.")
-	}
-
-	coll := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
-
-	record, err := a.app.Store().FindAuthRecordByToken(a.app.Store().DB(), coll.Name, confirmReq.Token)
-	if err != nil {
-		return c.JSON(400, err.Error())
-	}
-
-	record.SetPassword(confirmReq.ConfirmPassword)
-	record.RefreshToken()
-
-	err = a.app.Store().UpdateRecord(a.app.Store().DB(), coll.Name, record)
+	req, err := request.JsonValidate[model.Record, request.RecordConfirmResetPasswordRequest](c)
 	if err != nil {
 		return c.JSON(500, err.Error())
+	}
+
+	coll, _ := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
+
+	exec := store.Wrap(a.app.Store().DB())
+	record, err := a.app.Store().FindAuthRecordByToken(exec, coll.Name, req.Token)
+	if err != nil {
+		return NewNotFoundError("record with given token not found.", err)
+	}
+
+	record.SetPassword(req.ConfirmPassword)
+	record.RefreshToken()
+
+	err = a.app.Store().UpdateRecord(exec, coll.Name, record)
+	if err != nil {
+		return NewBadRequestError("Error updating record.", err)
 	}
 
 	a.app.OnRecordIndex().Trigger(&core.RecordEvent{

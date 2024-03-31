@@ -1,6 +1,11 @@
 package api
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
+	"log"
+
 	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -8,8 +13,6 @@ import (
 	"github.com/orangeseeds/blitzbase/store"
 	"github.com/orangeseeds/blitzbase/utils"
 )
-
-type AuthAction func(app core.App, c echo.Context) error
 
 const (
 	CtxUserKey       string = "user"
@@ -94,4 +97,33 @@ func LoadCollectionContextFromPath(app core.App) echo.MiddlewareFunc {
 			return next(c)
 		}
 	}
+}
+
+func CustomHTTPErrorHandler(err error, c echo.Context) {
+	var apiErr = new(ApiError)
+	if errors.As(err, &apiErr) {
+		if apiErr.Data != nil {
+			log.Println(apiErr.Data)
+		}
+	} else if v := new(echo.HTTPError); errors.As(err, &v) {
+		if v.Internal != nil {
+			log.Println(v.Internal)
+		}
+		msg := fmt.Sprintf("%v", v.Message)
+		apiErr = NewApiError(v.Code, msg, v)
+	} else {
+		if true { //debug
+			log.Println("as", err)
+		}
+
+		if errors.Is(err, sql.ErrNoRows) {
+			apiErr = NewNotFoundError("", err)
+		} else {
+			apiErr = NewBadRequestError("", err)
+		}
+	}
+	c.Logger().Error(apiErr)
+	c.JSON(apiErr.Code, map[string]any{
+		"error": apiErr,
+	})
 }

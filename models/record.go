@@ -3,11 +3,11 @@ package model
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/google/uuid"
+	"github.com/orangeseeds/blitzbase/utils"
 	"github.com/spf13/cast"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -42,7 +42,7 @@ func (r *Record) Load(data map[string]any) {
 	}
 }
 
-func (r *Record) TableName() string {
+func (r Record) TableName() string {
 	return r.Collection().GetName()
 }
 
@@ -55,9 +55,17 @@ func (r *Record) Set(key string, val any) {
 	case FieldId:
 		r.SetID(cast.ToString(val))
 	case FieldCreatedAt:
-		r.CreatedAt = cast.ToString(val)
+		dt, err := utils.ParseDateTime(val)
+		if err != nil {
+			return
+		}
+		r.CreatedAt = dt
 	case FieldUpdatedAt:
-		r.UpdatedAt = cast.ToString(val)
+		dt, err := utils.ParseDateTime(val)
+		if err != nil {
+			return
+		}
+		r.UpdatedAt = dt
 	default:
 		if r.Collection().Schema.HasField(key) {
 			r.data[key] = val
@@ -88,7 +96,6 @@ func (r *Record) Export() map[string]any {
 		toExport = r.data
 	}
 
-	log.Println(r)
 	toExport[FieldId] = r.Id
 	toExport[FieldCreatedAt] = r.CreatedAt
 	toExport[FieldUpdatedAt] = r.UpdatedAt

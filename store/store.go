@@ -5,6 +5,9 @@ import (
 	model "github.com/orangeseeds/blitzbase/models"
 )
 
+
+type FilterFunc func(q *dbx.SelectQuery) error
+
 type Store interface {
 	DB() *dbx.DB
 	Path() string
@@ -43,29 +46,3 @@ type Store interface {
 	// ExpandRecord()
 }
 
-type BaseStore struct {
-	db             *dbx.DB
-	isTransaction  bool
-	path           string
-	migrationsPath string
-}
-
-func NewBaseStore(db *dbx.DB) *BaseStore {
-	return &BaseStore{
-		db:             db,
-		path:           "",
-		migrationsPath: "",
-	}
-}
-
-func (s *BaseStore) DB() *dbx.DB {
-	return s.db
-}
-
-func (s *BaseStore) Path() string {
-	return s.path
-}
-
-func (s *BaseStore) MigrationsPath() string {
-	return s.migrationsPath
-}

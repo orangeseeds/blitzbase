@@ -17,7 +17,7 @@ type Admin struct {
 	// Rule string `db:"Rule"` // for now all rules
 }
 
-func (a *Admin) TableName() string {
+func (a Admin) TableName() string {
 	return "_admin_users"
 }
 

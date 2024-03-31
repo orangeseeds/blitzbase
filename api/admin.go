@@ -1,13 +1,14 @@
 package api
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/orangeseeds/blitzbase/core"
 	model "github.com/orangeseeds/blitzbase/models"
+	"github.com/orangeseeds/blitzbase/request"
+	"github.com/orangeseeds/blitzbase/store"
 	"github.com/orangeseeds/blitzbase/utils"
 )
 
@@ -20,7 +21,7 @@ func (a *AdminAPI) index(c echo.Context) error {
 	var admins []model.Admin
 	err := a.app.Store().DB().Select().From(admin.TableName()).All(&admins)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewApiError(500, "something went wrong!", nil)
 	}
 
 	event := core.AdminEvent{
@@ -36,7 +37,7 @@ func (a *AdminAPI) detail(c echo.Context) error {
 	id := c.Param("id")
 	admin, err := a.app.Store().FindAdminById(a.app.Store().DB(), id)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewNotFoundError("", err)
 	}
 
 	event := core.AdminEvent{
@@ -45,23 +46,25 @@ func (a *AdminAPI) detail(c echo.Context) error {
 		Request: &c,
 	}
 	a.app.OnAdminDetail().Trigger(&event)
+
 	return c.JSON(200, map[string]any{
 		"admin": admin,
 	})
 }
 
 func (a *AdminAPI) save(c echo.Context) error {
-	var admin model.Admin
-	err := c.Bind(&admin)
+	req, err := request.JsonValidate[model.Admin, request.AdminSaveRequest](c)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("", err)
 	}
+
+	admin := req.Model()
 	admin.SetPassword(admin.Password)
 	admin.RefreshToken()
 
 	err = a.app.Store().SaveAdmin(a.app.Store().DB(), &admin)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("Error saving admin.", err)
 	}
 
 	event := core.AdminEvent{
@@ -80,10 +83,11 @@ func (a *AdminAPI) save(c echo.Context) error {
 func (a *AdminAPI) delete(c echo.Context) error {
 	var admin model.Admin
 	id := c.Param("id")
+
 	admin.SetID(id)
 	err := a.app.Store().DeleteAdmin(a.app.Store().DB(), &admin)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("Error deleting admin.", err)
 	}
 
 	event := core.AdminEvent{
@@ -100,33 +104,26 @@ func (a *AdminAPI) delete(c echo.Context) error {
 }
 
 func (a *AdminAPI) authWithPassword(c echo.Context) error {
-	var authReq struct {
-		Email    string `json:"email" validate:"required"`
-		Password string `json:"password" validate:"required"`
-	}
-	err := c.Bind(&authReq)
+	req, err := request.JsonValidate[model.Admin, request.AdminSaveRequest](c)
 	if err != nil {
-		return c.JSON(400, err.Error())
-	}
-	err = c.Validate(authReq)
-	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewBadRequestError("", err)
 	}
 
-	admin, err := a.app.Store().FindAdminByEmail(a.app.Store().DB(), authReq.Email)
+	exec := store.Wrap(a.app.Store().DB())
+	admin, err := a.app.Store().FindAdminByEmail(exec, req.Email)
 	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewNotFoundError("admin with given email not found.", err)
 	}
 
-	valid := admin.ValidatePassword(authReq.Password)
+	valid := admin.ValidatePassword(req.Password)
 	if !valid {
-		return c.JSON(400, "Password didnot match!")
+		return NewNotFoundError("admin with given email and password not found.", err)
 	}
 
 	// give claims
 	authClaims := utils.JWTAuthClaims{
 		Id:         admin.Id,
-		Type:       "admin",
+		Type:       utils.JwtTypeAdmin,
 		Collection: admin.TableName(),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
@@ -151,21 +148,17 @@ func (a *AdminAPI) authWithPassword(c echo.Context) error {
 }
 
 func (a *AdminAPI) resetPassword(c echo.Context) error {
-	var resetReq struct {
-		Email string `json:"email" validate:"required"`
-	}
-	err := c.Bind(&resetReq)
+	req, err := request.JsonValidate[model.Admin, request.AdminSaveRequest](c)
 	if err != nil {
-		return c.JSON(400, err.Error())
-	}
-	err = c.Validate(resetReq)
-	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewBadRequestError("", err)
 	}
 
-	admin, err := a.app.Store().FindAdminByEmail(a.app.Store().DB(), resetReq.Email)
+	admin, err := a.app.Store().FindAdminByEmail(
+		store.Wrap(a.app.Store().DB()),
+		req.Email,
+	)
 	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewNotFoundError("admin with given email not found.", err)
 	}
 
 	// email to admin.Email
@@ -175,35 +168,22 @@ func (a *AdminAPI) resetPassword(c echo.Context) error {
 }
 
 func (a *AdminAPI) confirmResetPassword(c echo.Context) error {
-	var confirmReq struct {
-		Token           string `json:"token" validate:"required"`
-		Password        string `json:"password" validate:"required"`
-		ConfirmPassword string `json:"confirm_password" validate:"required"`
-	}
-	err := c.Bind(&confirmReq)
+	confirmReq, err := request.JsonValidate[model.Admin, request.AdminConfirmResetPasswordRequest](c)
 	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewBadRequestError("", err)
 	}
-	err = c.Validate(confirmReq)
+	exec := store.Wrap(a.app.Store().DB())
+	admin, err := a.app.Store().FindAdminByToken(exec, confirmReq.Token)
 	if err != nil {
-		return c.JSON(400, err.Error())
-	}
-
-	if confirmReq.Password != confirmReq.ConfirmPassword {
-		return c.JSON(400, fmt.Errorf("password and confirm_password not equal."))
-	}
-
-	admin, err := a.app.Store().FindAdminByToken(a.app.Store().DB(), confirmReq.Token)
-	if err != nil {
-		return c.JSON(400, err.Error())
+		return NewNotFoundError("admin with given token not found.", err)
 	}
 
 	admin.SetPassword(confirmReq.ConfirmPassword)
 	admin.RefreshToken()
 
-	err = a.app.Store().UpdateAdmin(a.app.Store().DB(), admin)
+	err = a.app.Store().UpdateAdmin(exec, admin)
 	if err != nil {
-		return c.JSON(500, err.Error())
+		return NewBadRequestError("Error updating admin.", err)
 	}
 
 	event := core.AdminEvent{

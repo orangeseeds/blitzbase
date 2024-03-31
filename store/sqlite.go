@@ -3,10 +3,10 @@ package store
 import (
 	"fmt"
 	"log"
-	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	model "github.com/orangeseeds/blitzbase/models"
+	"github.com/orangeseeds/blitzbase/utils"
 )
 
 type SQliteStore struct {
@@ -41,7 +41,7 @@ func (s *SQliteStore) TableExists(db DBExector, tableName string) bool {
 func (s *SQliteStore) createTable(db DBExector, name string, defn map[string]string) error {
 	query := db.CreateTable(name, defn)
 	if _, err := query.Execute(); err != nil {
-		return err
+		return err // gives unknown db error
 	}
 
 	// Possible place to add migrations
@@ -59,7 +59,7 @@ func (s *SQliteStore) CreateCollectionTable(db DBExector, c *model.Collection) e
 
 // make sure if you are running this check if previous admin tables are present
 func (s *SQliteStore) CreateAdminTable(db DBExector) error {
-	var a *model.Admin
+	var a model.Admin
 
 	if s.TableExists(db, a.TableName()) {
 		return fmt.Errorf("Table with name %s already exists.", a.TableName())
@@ -109,8 +109,8 @@ func (s *SQliteStore) SaveCollection(db DBExector, col *model.Collection) error 
 		model.FieldDetailRule: col.DetailRule,
 		model.FieldUpdateRule: col.UpdateRule,
 		model.FieldDeleteRule: col.DeleteRule,
-		model.FieldCreatedAt:  time.Now().String(),
-		model.FieldUpdatedAt:  time.Now().String(),
+		model.FieldCreatedAt:  utils.NowDateTime().String(),
+		model.FieldUpdatedAt:  utils.NowDateTime().String(),
 	}
 	_, err = db.Insert(col.TableName(), params).Execute()
 	return err
@@ -137,7 +137,7 @@ func (s *SQliteStore) FindAdminById(db DBExector, id string) (*model.Admin, erro
 
 func (s *SQliteStore) FindAdminByEmail(db DBExector, email string) (*model.Admin, error) {
 	var admin model.Admin
-	err := db.(*dbx.DB).Select().
+	err := db.Select().
 		From(admin.TableName()).
 		Where(dbx.HashExp{
 			model.FieldEmail: email,
@@ -176,7 +176,7 @@ func (s *SQliteStore) SaveAdmin(db DBExector, a *model.Admin) error {
 	if !s.CheckAdminEmailIsUnique(db, a.Email) {
 		return fmt.Errorf("admin email %s not unique", a.Email)
 	}
-	return db.(*dbx.DB).Model(a).Insert()
+	return db.Model(a).Insert()
 }
 
 func (s *SQliteStore) UpdateAdmin(db DBExector, a *model.Admin) error {
@@ -282,8 +282,8 @@ func (s *SQliteStore) SaveRecord(db DBExector, r *model.Record, filters ...Filte
 	}
 
 	err := s.DB().Transactional(func(tx *dbx.Tx) error {
-		r.CreatedAt = time.Now().String()
-		r.UpdatedAt = time.Now().String()
+		r.CreatedAt = utils.NowDateTime()
+		r.UpdatedAt = utils.NowDateTime()
 		_, err := tx.Insert(r.TableName(), r.Export()).Execute()
 		if err != nil {
 			return err
