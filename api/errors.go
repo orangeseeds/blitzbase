@@ -1,7 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type ApiError struct {
@@ -18,7 +22,7 @@ func NewApiError(code int, msg string, data any) *ApiError {
 	return &ApiError{
 		Code: code,
 		Info: msg,
-		Data: data,
+		Data: parseErr(data),
 	}
 }
 
@@ -47,17 +51,20 @@ func NewUnauthorizedError(msg string, data any) *ApiError {
 	return NewApiError(http.StatusUnauthorized, msg, data)
 }
 
-// func parseErr(data any) map[string]any {
-// 	errorMsg := map[string]any{}
-//
-// 	log.Println("hey", errors.Unwrap(data.(*echo.HTTPError)))
-//
-// 	if errors.Is(data.(error), validator.ValidationErrors{}) {
-// 		for _, e := range data.(validator.ValidationErrors) {
-// 			errorMsg[e.Field()] = e.Error()
-// 		}
-// 	}
-// 	// default:
-// 	// 	errorMsg["other"] = data
-// 	return errorMsg
-// }
+func parseErr(data any) map[string]any {
+	errorMsg := map[string]any{}
+
+	if data == nil {
+		return errorMsg
+	}
+
+	if errs, ok := data.(validator.ValidationErrors); ok {
+		for _, e := range errs {
+			errorMsg[strings.ToLower(e.Field())] = fmt.Sprintf("field '%s' need to be %s %s", e.Field(), e.Tag(), e.Param())
+		}
+	} else {
+		errorMsg["message"] = data.(error).Error()
+	}
+
+	return errorMsg
+}

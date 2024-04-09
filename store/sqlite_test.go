@@ -45,6 +45,10 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func TestFns(t *testing.T){
+    // db.Select().Where().On
+}
+
 func TestCreateCollectionsTable(t *testing.T) {
 	exec := Wrap(db)
 	err := sqliteStore.CreateCollectionMetaTable(exec)

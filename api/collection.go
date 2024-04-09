@@ -51,6 +51,7 @@ func (a *CollectionAPI) detail(c echo.Context) error {
 }
 
 func (a *CollectionAPI) save(c echo.Context) error {
+	log.Println("jere")
 	req, err := request.JsonValidate[model.Collection, request.CollectionSaveRequest](c)
 	if err != nil {
 		return NewBadRequestError("", err)
@@ -60,7 +61,6 @@ func (a *CollectionAPI) save(c echo.Context) error {
 	if col.IsAuth() {
 		for _, v := range model.AuthRecordFields() {
 			if !col.Schema.HasField(v) {
-				log.Println(v)
 				f := model.Field{
 					Id:      uuid.NewString(),
 					Name:    v,
@@ -71,7 +71,7 @@ func (a *CollectionAPI) save(c echo.Context) error {
 			}
 		}
 	}
-	col.SetID(uuid.NewString())
+
 	exec := store.Wrap(a.app.Store().DB())
 	err = a.app.Store().SaveCollection(exec, &col)
 	if err != nil {
@@ -98,17 +98,21 @@ func (a *CollectionAPI) save(c echo.Context) error {
 }
 
 func (a *CollectionAPI) delete(c echo.Context) error {
-	var col model.Collection
-	col.SetID(c.Param("collection"))
+	name := c.Param("collection")
 	exec := store.Wrap(a.app.Store().DB())
-	err := a.app.Store().DeleteCollection(exec, &col)
+	col, err := a.app.Store().FindCollectionByNameorId(exec, name)
 	if err != nil {
-		return NewBadRequestError("", map[string]any{"data": err.Error()})
+		return NewNotFoundError("", err)
+	}
+
+	err = a.app.Store().DeleteCollection(exec, col)
+	if err != nil {
+		return NewBadRequestError("", err)
 	}
 
 	a.app.OnCollectionDelete().Trigger(&core.CollectionEvent{
 		Type:       core.DeleteEvent,
-		Collection: &col,
+		Collection: col,
 		Request:    &c,
 	})
 

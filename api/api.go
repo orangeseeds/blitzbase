@@ -30,8 +30,8 @@ func LoadAllAPIRoutes(app core.App, e *echo.Echo) {
 		grp := e.Group("/collections", LoadJWT(), NeedsAdminAuth(app))
 		grp.GET("", collAPI.index)
 		grp.POST("", collAPI.save)
-		grp.GET("/d/:collection", collAPI.detail)
-		grp.DELETE("/d/:collection", collAPI.delete)
+		grp.GET("/:collection", collAPI.detail)
+		grp.DELETE("/:collection", collAPI.delete)
 	}
 
 	recordAPI := RecordAPI{app: app}
@@ -41,16 +41,13 @@ func LoadAllAPIRoutes(app core.App, e *echo.Echo) {
 		grp.POST("", recordAPI.save)
 		grp.GET("/:record", recordAPI.detail)
 		grp.DELETE("/:record", recordAPI.delete, LoadJWT())
+
+		grp.POST("/auth-with-password", recordAPI.authWithPassword)
+		grp.POST("/reset-password", recordAPI.resetPassword)
+		grp.POST("/confirm-reset-password", recordAPI.confirmResetPassword)
 	}
 
-	authRecAPI := AuthRecordAPI{app: app}
-	{
-		grp := e.Group("/collections/:collection", LoadCollectionContextFromPath(app))
-		grp.POST("/auth-with-password", authRecAPI.authWithPassword)
-		grp.POST("/reset-password", authRecAPI.resetPassword)
-		grp.POST("/confirm-reset-password", authRecAPI.confirmResetPassword)
-	}
-
+    // TODO: Add the route list printer as a helper function which can be accessed using a flag.
 	_, err := json.MarshalIndent(e.Routes(), "", " ")
 	if err != nil {
 		panic(err)
@@ -63,6 +60,7 @@ func SetupServer(app core.App) *echo.Echo {
 	e.Validator = utils.NewCustomValidator(validator.New())
 	e.HTTPErrorHandler = CustomHTTPErrorHandler
 	e.Pre(middleware.RemoveTrailingSlash())
+	e.HideBanner = true
 	LoadAllAPIRoutes(app, e)
 	return e
 }

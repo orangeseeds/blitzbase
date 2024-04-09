@@ -2,21 +2,20 @@ package core
 
 import (
 	"testing"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func TestApp(t *testing.T) {
 	app := DBApp{
-		onStart: &Hook[*AppEvent]{},
+		onStart:     &Hook[*AppEvent]{},
+		onAdminAuth: &Hook[*AdminEvent]{},
 	}
 
-	id := app.OnStart().Add(func(e *AppEvent) error {
-		t.Log("App started on port:", e.App.Addr())
-		return nil
-	})
-	app.OnStart().Remove(id)
+	t.Log("before", time.Now())
+	app.onAdminAuth.Trigger(&AdminEvent{})
+	t.Log("after", time.Now())
 
-	app.Start(":8080")
-
+	t.Log("Doing other things...")
 }

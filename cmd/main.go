@@ -11,7 +11,8 @@ import (
 )
 
 func main() {
-	log.Printf("Serving on %s", ":9900")
+	port := ":5173"
+	log.Printf("Serving on %s", port)
 	dbPath := "data.db"
 	db, err := dbx.Open("sqlite3", dbPath)
 	if err != nil {
@@ -26,7 +27,7 @@ func main() {
 
 	app := core.NewDBApp(core.DBAppConfig{
 		DbPath:     dbPath,
-		ServerAddr: ":9900",
+		ServerAddr: port,
 	}, st)
 
 	go func() {

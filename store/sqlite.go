@@ -5,6 +5,7 @@ import (
 	"log"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
+	"github.com/google/uuid"
 	model "github.com/orangeseeds/blitzbase/models"
 	"github.com/orangeseeds/blitzbase/utils"
 )
@@ -100,7 +101,7 @@ func (s *SQliteStore) SaveCollection(db DBExector, col *model.Collection) error 
 	}
 	col.SetName(col.Name)
 	params := dbx.Params{
-		model.FieldId:         col.GetID(),
+		model.FieldId:         uuid.NewString(),
 		model.FieldName:       col.GetName(),
 		model.FieldType:       col.Type,
 		model.FieldSchema:     string(json),
@@ -176,10 +177,14 @@ func (s *SQliteStore) SaveAdmin(db DBExector, a *model.Admin) error {
 	if !s.CheckAdminEmailIsUnique(db, a.Email) {
 		return fmt.Errorf("admin email %s not unique", a.Email)
 	}
+	a.SetID(uuid.NewString())
+	a.CreatedAt = utils.NowDateTime()
+	a.UpdatedAt = utils.NowDateTime()
 	return db.Model(a).Insert()
 }
 
 func (s *SQliteStore) UpdateAdmin(db DBExector, a *model.Admin) error {
+	a.UpdatedAt = utils.NowDateTime()
 	return db.Model(a).Update()
 }
 
@@ -275,13 +280,14 @@ func (s *SQliteStore) SaveRecord(db DBExector, r *model.Record, filters ...Filte
 				return fmt.Errorf("auth record needs the field %s", v)
 			}
 		}
-		if s.AuthRecordEmailIsUnique(db, r.TableName(), r.GetString(model.FieldEmail)) {
+		if !s.AuthRecordEmailIsUnique(db, r.TableName(), r.GetString(model.FieldEmail)) {
 			return fmt.Errorf("record in %s collection already exists with email %s", r.TableName(), r.GetString(model.FieldEmail))
 		}
 
 	}
 
 	err := s.DB().Transactional(func(tx *dbx.Tx) error {
+		r.SetID(uuid.NewString())
 		r.CreatedAt = utils.NowDateTime()
 		r.UpdatedAt = utils.NowDateTime()
 		_, err := tx.Insert(r.TableName(), r.Export()).Execute()
@@ -369,6 +375,7 @@ func (s *SQliteStore) UpdateRecord(db DBExector, collection string, r *model.Rec
 	for _, f := range col.Schema.GetFields() {
 		params[f.Name] = r.Get(f.Name)
 	}
+	params[model.FieldUpdatedAt] = utils.NowDateTime().String()
 
 	_, err = db.Update(col.Name, params, dbx.HashExp{
 		model.FieldId: r.GetID(),

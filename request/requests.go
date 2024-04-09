@@ -84,7 +84,6 @@ func (r RecordAuthWithPasswordRequest) Model() model.Record {
 
 type RecordResetPasswordRequest struct {
 	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=3"`
 }
 
 func (r RecordResetPasswordRequest) Model() model.Record {
