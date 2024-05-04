@@ -37,7 +37,7 @@ func LoadAllAPIRoutes(app core.App, e *echo.Echo) {
 	{
 		grp := e.Group("/collections/:collection/records", LoadCollectionContextFromPath(app))
 		grp.GET("", recordAPI.index)
-		grp.POST("", recordAPI.save)
+		grp.POST("", recordAPI.save, LoadJWT())
 		grp.GET("/:record", recordAPI.detail)
 		grp.DELETE("/:record", recordAPI.delete, LoadJWT())
 

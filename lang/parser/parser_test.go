@@ -20,7 +20,7 @@ func TestExpressionStatement(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		l := lexer.NewLexer(tc.input)
+		l := lexer.New(tc.input)
 		p := New(l)
 		program := p.ParseProgram()
 		if program == nil {

@@ -9,7 +9,7 @@ type Lexer struct {
 	char    byte
 }
 
-func NewLexer(input string) *Lexer {
+func New(input string) *Lexer {
 	l := &Lexer{
 		input: input,
 	}
