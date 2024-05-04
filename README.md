@@ -3,7 +3,6 @@
 Blitzbase is a project inspired by pocketbase & supabase with realtime subscriptions and a simple REST API written in go.
 
 #### Running the project
-(make sure that sqlite is installed in your device.)
 ```
 $   go run ./cmd/
 ```
