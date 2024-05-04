@@ -1,8 +1,6 @@
 package api
 
 import (
-	"log"
-
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/orangeseeds/blitzbase/core"
@@ -51,7 +49,6 @@ func (a *CollectionAPI) detail(c echo.Context) error {
 }
 
 func (a *CollectionAPI) save(c echo.Context) error {
-	log.Println("jere")
 	req, err := request.JsonValidate[model.Collection, request.CollectionSaveRequest](c)
 	if err != nil {
 		return NewBadRequestError("", err)

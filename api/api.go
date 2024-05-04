@@ -22,7 +22,6 @@ func LoadAllAPIRoutes(app core.App, e *echo.Echo) {
 		grp.POST("/auth-with-password", adminAPI.authWithPassword)
 		grp.POST("/reset-password", adminAPI.resetPassword)
 		grp.POST("/confirm-reset-password", adminAPI.confirmResetPassword)
-
 	}
 
 	collAPI := CollectionAPI{app: app}
@@ -47,7 +46,14 @@ func LoadAllAPIRoutes(app core.App, e *echo.Echo) {
 		grp.POST("/confirm-reset-password", recordAPI.confirmResetPassword)
 	}
 
-    // TODO: Add the route list printer as a helper function which can be accessed using a flag.
+	realtimeAPI := RealtimeAPI{app: app}
+	{
+		grp := e.Group("/realtime")
+		grp.POST("", realtimeAPI.setSubscription)
+		grp.GET("", realtimeAPI.subscribe)
+	}
+
+	// TODO: Add the route list printer as a helper function which can be accessed using a flag.
 	_, err := json.MarshalIndent(e.Routes(), "", " ")
 	if err != nil {
 		panic(err)

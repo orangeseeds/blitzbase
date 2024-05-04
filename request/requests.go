@@ -83,7 +83,7 @@ func (r RecordAuthWithPasswordRequest) Model() model.Record {
 }
 
 type RecordResetPasswordRequest struct {
-	Email    string `json:"email" validate:"required,email"`
+	Email string `json:"email" validate:"required,email"`
 }
 
 func (r RecordResetPasswordRequest) Model() model.Record {
@@ -98,4 +98,10 @@ type RecordConfirmResetPasswordRequest struct {
 
 func (r RecordConfirmResetPasswordRequest) Model() model.Record {
 	return model.Record{}
+}
+
+type SetSubscriptionRequest struct {
+    CollectionId string `json:"collection_id" validate:"required"`
+    RecordId     string `json:"record_id" validate:"required"`
+    // Type []string `json:"type" validate:oneof=create update delete all` // create, update, delete
 }

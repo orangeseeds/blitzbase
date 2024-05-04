@@ -48,7 +48,7 @@ func (a *RecordAPI) detail(c echo.Context) error {
 		return NewNotFoundError("", err)
 	}
 
-	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
+	a.app.OnRecordDetail().Trigger(&core.RecordEvent{
 		Type:    core.DetailEvent,
 		Record:  record,
 		Request: &c,
@@ -82,8 +82,8 @@ func (a *RecordAPI) save(c echo.Context) error {
 		return NewBadRequestError("error occured when saving record.", err)
 	}
 
-	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
-		Type:    core.CreateEvent,
+	a.app.OnRecordCreate().Trigger(&core.RecordEvent{
+		Type:    core.IndexEvent,
 		Record:  record,
 		Request: &c,
 	})
@@ -104,8 +104,8 @@ func (a *RecordAPI) delete(c echo.Context) error {
 		return NewBadRequestError("error occured when deleting record.", err)
 	}
 
-	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
-		Type:    core.DetailEvent,
+	a.app.OnRecordDelete().Trigger(&core.RecordEvent{
+		Type:    core.DeleteEvent,
 		Record:  record,
 		Request: &c,
 	})
@@ -201,7 +201,7 @@ func (a *RecordAPI) confirmResetPassword(c echo.Context) error {
 		return NewBadRequestError("Error updating record.", err)
 	}
 
-	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
+	a.app.OnRecordUpdate().Trigger(&core.RecordEvent{
 		Type:    core.UpdateEvent,
 		Record:  record,
 		Request: &c,
