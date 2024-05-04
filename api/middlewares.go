@@ -37,19 +37,17 @@ func NeedsAdminAuth(app core.App) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			token, ok := c.Get(CtxUserKey).(*jwt.Token)
 			if !ok {
-				return c.JSON(500, "cannot convert contex.%s to jwt.Token")
+				return NewBadRequestError("", errors.New("cannot get valid jwt token"))
 			}
 
 			authClaims := token.Claims.(*utils.JWTAuthClaims)
 			if authClaims.Type != utils.JwtTypeAdmin {
-				return c.JSON(400, "jwt type is not admin")
+				return NewForbiddenError("", errors.New("jwt not from an admin."))
 			}
 
 			admin, err := app.Store().FindAdminById(app.Store().DB(), authClaims.Id)
 			if err != nil {
-				return c.JSON(500, map[string]any{
-					"message": "invalid jwt token",
-				})
+				return NewUnauthorizedError("", err)
 			}
 			c.Set("admin", admin)
 			return next(c)
@@ -68,13 +66,13 @@ func LoadAuthContextFromToken(app core.App) echo.MiddlewareFunc {
 			case utils.JwtTypeAdmin:
 				admin, err := app.Store().FindAdminById(exec, claims.Id)
 				if err != nil {
-					return c.JSON(400, err.Error())
+					return NewNotFoundError("", err)
 				}
 				c.Set(CtxAdminKey, admin)
 			case utils.JwtTypeCollection:
 				record, err := app.Store().FindRecordById(exec, claims.Collection, claims.Id)
 				if err != nil {
-					return c.JSON(400, err.Error())
+					return NewNotFoundError("", err)
 				}
 				c.Set(CtxAuthRecordKey, record)
 			}
@@ -90,7 +88,7 @@ func LoadCollectionContextFromPath(app core.App) echo.MiddlewareFunc {
 			exec := store.Wrap(app.Store().DB())
 			collection, err := app.Store().FindCollectionByNameorId(exec, name)
 			if err != nil {
-				return c.JSON(400, err.Error())
+				return NewNotFoundError("", err)
 			}
 
 			c.Set(string(CtxCollectionKey), collection)
@@ -102,6 +100,7 @@ func LoadCollectionContextFromPath(app core.App) echo.MiddlewareFunc {
 func CustomHTTPErrorHandler(err error, c echo.Context) {
 	var apiErr = new(ApiError)
 	if errors.As(err, &apiErr) {
+		log.Println("api", apiErr.Data)
 		if apiErr.Data != nil {
 			log.Println(apiErr.Data)
 		}

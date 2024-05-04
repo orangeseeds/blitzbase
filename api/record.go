@@ -1,16 +1,17 @@
 package api
 
 import (
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/orangeseeds/blitzbase/core"
 	model "github.com/orangeseeds/blitzbase/models"
 	"github.com/orangeseeds/blitzbase/request"
 	"github.com/orangeseeds/blitzbase/store"
 	"github.com/orangeseeds/blitzbase/utils"
+	"github.com/orangeseeds/blitzbase/utils/resolver"
 )
 
 type RecordAPI struct {
@@ -18,6 +19,7 @@ type RecordAPI struct {
 }
 
 func (a *RecordAPI) index(c echo.Context) error {
+	log.Println("here")
 	collection, ok := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
 	if !ok {
 		return NewApiError(500, "some error occured", nil)
@@ -26,6 +28,19 @@ func (a *RecordAPI) index(c echo.Context) error {
 	records, err := a.app.Store().FindRecordsAll(exec, collection.Name)
 	if err != nil {
 		return NewApiError(500, "some error occured", err)
+	}
+
+	if collection.IndexRule != "" {
+		allowed := resolver.CheckPermission(collection.IndexRule, resolver.RequestInfo{
+			Data:       map[string]any{},
+			Method:     "GET",
+			Collection: collection,
+			Context:    c,
+		})
+		log.Println("Permission: ", allowed)
+		if !allowed {
+			return NewForbiddenError("Rule doesn't allow access to the collection", nil)
+		}
 	}
 
 	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
@@ -47,7 +62,25 @@ func (a *RecordAPI) detail(c echo.Context) error {
 		return NewNotFoundError("", err)
 	}
 
-	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
+	collection, ok := c.Get(string(utils.JwtTypeCollection)).(*model.Collection)
+	if !ok {
+		return NewApiError(500, "some error occured", nil)
+	}
+
+	if collection.DetailRule != "" {
+		allowed := resolver.CheckPermission(collection.DetailRule, resolver.RequestInfo{
+			Data:       map[string]any{},
+			Method:     "GET",
+			Collection: collection,
+			Context:    c,
+		})
+		log.Println("Permission: ", allowed)
+		if !allowed {
+			return NewForbiddenError("Rule doesn't allow access to the collection", nil)
+		}
+	}
+
+	a.app.OnRecordDetail().Trigger(&core.RecordEvent{
 		Type:    core.DetailEvent,
 		Record:  record,
 		Request: &c,
@@ -76,14 +109,26 @@ func (a *RecordAPI) save(c echo.Context) error {
 	}
 
 	exec := store.Wrap(a.app.Store().DB())
-	record.SetID(uuid.NewString())
 	err = a.app.Store().SaveRecord(exec, record)
 	if err != nil {
 		return NewBadRequestError("error occured when saving record.", err)
 	}
 
-	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
-		Type:    core.CreateEvent,
+	if col.UpdateRule != "" {
+		allowed := resolver.CheckPermission(col.UpdateRule, resolver.RequestInfo{
+			Data:       map[string]any{},
+			Method:     "POST",
+			Collection: col,
+			Context:    c,
+		})
+		log.Println("Permission: ", allowed)
+		if !allowed {
+			return NewForbiddenError("Rule doesn't allow access to the collection", nil)
+		}
+	}
+
+	a.app.OnRecordCreate().Trigger(&core.RecordEvent{
+		Type:    core.IndexEvent,
 		Record:  record,
 		Request: &c,
 	})
@@ -104,8 +149,21 @@ func (a *RecordAPI) delete(c echo.Context) error {
 		return NewBadRequestError("error occured when deleting record.", err)
 	}
 
-	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
-		Type:    core.DetailEvent,
+	if col.DeleteRule != "" {
+		allowed := resolver.CheckPermission(col.DeleteRule, resolver.RequestInfo{
+			Data:       map[string]any{},
+			Method:     "DELETE",
+			Collection: col,
+			Context:    c,
+		})
+		log.Println("Permission: ", allowed)
+		if !allowed {
+			return NewForbiddenError("Rule doesn't allow access to the collection", nil)
+		}
+	}
+
+	a.app.OnRecordDelete().Trigger(&core.RecordEvent{
+		Type:    core.DeleteEvent,
 		Record:  record,
 		Request: &c,
 	})
@@ -115,11 +173,7 @@ func (a *RecordAPI) delete(c echo.Context) error {
 	})
 }
 
-type AuthRecordAPI struct {
-	app core.App
-}
-
-func (a *AuthRecordAPI) authWithPassword(c echo.Context) error {
+func (a *RecordAPI) authWithPassword(c echo.Context) error {
 	req, err := request.JsonValidate[model.Record, request.RecordAuthWithPasswordRequest](c)
 	if err != nil {
 		return NewBadRequestError("", err)
@@ -163,7 +217,7 @@ func (a *AuthRecordAPI) authWithPassword(c echo.Context) error {
 	})
 }
 
-func (a *AuthRecordAPI) resetPassword(c echo.Context) error {
+func (a *RecordAPI) resetPassword(c echo.Context) error {
 	req, err := request.JsonValidate[model.Record, request.RecordResetPasswordRequest](c)
 	if err != nil {
 		return NewBadRequestError("", err)
@@ -183,7 +237,7 @@ func (a *AuthRecordAPI) resetPassword(c echo.Context) error {
 	})
 }
 
-func (a *AuthRecordAPI) confirmResetPassword(c echo.Context) error {
+func (a *RecordAPI) confirmResetPassword(c echo.Context) error {
 	req, err := request.JsonValidate[model.Record, request.RecordConfirmResetPasswordRequest](c)
 	if err != nil {
 		return c.JSON(500, err.Error())
@@ -205,7 +259,7 @@ func (a *AuthRecordAPI) confirmResetPassword(c echo.Context) error {
 		return NewBadRequestError("Error updating record.", err)
 	}
 
-	a.app.OnRecordIndex().Trigger(&core.RecordEvent{
+	a.app.OnRecordUpdate().Trigger(&core.RecordEvent{
 		Type:    core.UpdateEvent,
 		Record:  record,
 		Request: &c,

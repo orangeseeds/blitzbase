@@ -1,12 +1,11 @@
 package core
 
 import (
-	"github.com/orangeseeds/blitzbase/pubsub"
 	"github.com/orangeseeds/blitzbase/store"
 )
 
 type App interface {
-	Publisher() *pubsub.Publisher
+	// Publisher() *pubsub.Producer
 	Store() store.Store
 	Addr() string
 
@@ -40,7 +39,7 @@ type DBAppConfig struct {
 }
 
 type DBApp struct {
-	publisher   *pubsub.Publisher
+	// publisher   *pubsub.Producer
 	store       store.Store
 	dbDir       string
 	addr        string
@@ -73,7 +72,7 @@ func NewDBApp(config DBAppConfig, store store.Store) *DBApp {
 		dbDir:     config.DbPath,
 		addr:      config.ServerAddr,
 		store:     store,
-		publisher: pubsub.NewPublisher(),
+		// publisher: pubsub.NewProducer(),
 
 		onStart:     &Hook[*AppEvent]{},
 		onTerminate: &Hook[*AppEvent]{},
@@ -107,7 +106,7 @@ func (a *DBApp) Start(addr string) {
 		App:  a,
 	})
 }
-func (a *DBApp) Publisher() *pubsub.Publisher { return a.publisher }
+// func (a *DBApp) Publisher() *pubsub.Producer { return a.publisher }
 
 func (a *DBApp) OnStart() *Hook[*AppEvent]     { return a.onStart }
 func (a *DBApp) OnTerminate() *Hook[*AppEvent] { return a.onTerminate }

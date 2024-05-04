@@ -1,6 +1,8 @@
 package store
 
-import dbx "github.com/go-ozzo/ozzo-dbx"
+import (
+	dbx "github.com/go-ozzo/ozzo-dbx"
+)
 
 type DBExector interface {
 	Select(s ...string) *dbx.SelectQuery
@@ -30,6 +32,17 @@ func Wrap[T *dbx.DB | *dbx.Tx](db T) DBExector {
 type DBWrapper struct {
 	db *dbx.DB
 }
+
+// func SelectQuery(w DBExector) *dbx.SelectQuery {
+// 	switch w.(type) {
+// 	case *DBWrapper:
+// 		return w.(*DBWrapper).Select()
+// 	case *TxWrapper:
+// 		return w.(*TxWrapper).Select()
+// 	default:
+// 		panic(fmt.Sprintf("%T not a valid DBWrapper", w))
+// 	}
+// }
 
 func (dbw *DBWrapper) Select(s ...string) *dbx.SelectQuery {
 	return dbw.db.Select(s...)

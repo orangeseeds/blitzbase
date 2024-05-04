@@ -85,7 +85,8 @@ func (a *AdminAPI) delete(c echo.Context) error {
 	id := c.Param("id")
 
 	admin.SetID(id)
-	err := a.app.Store().DeleteAdmin(a.app.Store().DB(), &admin)
+	exec := store.DBExector(a.app.Store().DB())
+	err := a.app.Store().DeleteAdmin(exec, &admin)
 	if err != nil {
 		return NewBadRequestError("Error deleting admin.", err)
 	}
@@ -148,7 +149,7 @@ func (a *AdminAPI) authWithPassword(c echo.Context) error {
 }
 
 func (a *AdminAPI) resetPassword(c echo.Context) error {
-	req, err := request.JsonValidate[model.Admin, request.AdminSaveRequest](c)
+	req, err := request.JsonValidate[model.Admin, request.AdminResetPasswordRequest](c)
 	if err != nil {
 		return NewBadRequestError("", err)
 	}
