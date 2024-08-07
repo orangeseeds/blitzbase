@@ -1,6 +1,6 @@
 # Blitzbase
 
-Blitzbase is a project inspired by pocketbase & supabase with realtime subscriptions and a simple REST API written in go.
+Blitzbase is a realtime database API inspired by pocketbase & supabase with realtime subscriptions using SSEs(which I plan to upgrade to websockets) and a REST API written in go.
 
 #### Running the project
 (make sure that sqlite is installed in your device.)
@@ -12,14 +12,13 @@ $   go run ./cmd/
  To see it in action open index.html from inside the [ui](https://github.com/orangeseeds/Blitzbase/tree/main/ui) folder.
 -->
 
+### Features
 
-# Permission Parser
+- Collection Based Data: Tables are represented as collections.
+- Subscribable Events: Events with specific topics can be subscribed to, like Edit events on certain collections, or even specific records.
+- Permission Parser: It is used to parse the language for assigning access permission for collections. Extra features in this particular parser include, property accessors parser for syntax like, `collection.name` or `$request.auth.id`(similar to pocketbase). 
 
-Extended parser from [_Writing An Interpreter In Go_](https://interpreterbook.com/), **_highly_** recommend the book.
-
-This is a lexer and parser lib for use in [Blitzbase](https://github.com/orangeseeds/blitzbase). It is used to parse the language for assigning access permission for collections. Extra features in this particular parser include, property accessors parser for syntax like, `collection.name` or `$request.auth.id`. 
-
-The parser parses expression in a right-to-left manner, no operator precedence in this parser.
+The parser parses expression in a right-to-left manner, no operator precedence in this parser(which will be added soon).
 
 A statement like this 
 `$request.data.is_valid_date & collection.exists | collection.id != 10;` 
